@@ -28,9 +28,9 @@ public sealed class SingleInstanceService : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(applicationId);
 
         string identity = $"{Environment.UserName}:{applicationId}";
-        string suffix = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity)));
-        string mutexName = $"ChromiumBuildUpdater-{suffix}";
-        string pipeName = $"ChromiumBuildUpdater-{suffix}";
+        string suffix = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity)))[..16];
+        string mutexName = $"CBU-{suffix}";
+        string pipeName = $"CBU-{suffix}";
         var mutex = new Mutex(initiallyOwned: true, mutexName, out bool createdNew);
         if (!createdNew)
         {
