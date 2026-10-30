@@ -10,6 +10,10 @@ namespace HibbikiUpdater.UI;
 
 public partial class MainForm : Form
 {
+    private const string PayPalSupportUrl = "https://paypal.me/AliaksandrJoya";
+    private const string EthereumSupportAddress = "0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791";
+    private const string BitcoinSupportAddress = "bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr";
+
     private readonly ConfigService _configService;
     private readonly RegistryStartupService _startupService;
     private readonly LocalChromiumService _localChromiumService;
@@ -41,9 +45,7 @@ public partial class MainForm : Form
 
         InitializeComponent();
         BindConfigToUi();
-        _lnkPayPal.Enabled = TryGetSupportUri(_configService.Current.SupportUrl, out _);
-        _lnkEthereum.Enabled = !string.IsNullOrWhiteSpace(_configService.Current.EthereumAddress);
-        _lnkBitcoin.Enabled = !string.IsNullOrWhiteSpace(_configService.Current.BitcoinAddress);
+        _lnkPayPal.Enabled = TryGetSupportUri(PayPalSupportUrl, out _);
         SetButtonsEnabled(true);
         if (_configService.LastError is not null)
             _lblStatus.Text = _configService.LastError;
@@ -165,10 +167,10 @@ public partial class MainForm : Form
         _btnCheckNow.Click += async (_, _) => await RunUpdateCycleAsync(forceInstall: false, manualCheckOnly: true);
         _lnkPayPal.LinkClicked += (_, _) => OpenSupportPage();
         _lnkEthereum.LinkClicked += (_, _) => CopySupportAddress(
-            _configService.Current.EthereumAddress,
+            EthereumSupportAddress,
             "Ethereum address");
         _lnkBitcoin.LinkClicked += (_, _) => CopySupportAddress(
-            _configService.Current.BitcoinAddress,
+            BitcoinSupportAddress,
             "Bitcoin address");
     }
 
@@ -179,7 +181,7 @@ public partial class MainForm : Form
 
     private void OpenSupportPage()
     {
-        if (!TryGetSupportUri(_configService.Current.SupportUrl, out Uri? supportUri))
+        if (!TryGetSupportUri(PayPalSupportUrl, out Uri? supportUri))
             return;
 
         try

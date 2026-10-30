@@ -1,3 +1,4 @@
+using System.Text.Json;
 using HibbikiUpdater.Models;
 using HibbikiUpdater.Services;
 
@@ -19,9 +20,13 @@ public class ConfigServiceTests
             Assert.Equal(new AppConfig().AutoUpdate, service.Current.AutoUpdate);
             Assert.Equal(new AppConfig().CheckIntervalHours, service.Current.CheckIntervalHours);
 
+            using JsonDocument savedConfig = JsonDocument.Parse(File.ReadAllText(configPath));
+            Assert.False(savedConfig.RootElement.TryGetProperty("SupportUrl", out _));
+            Assert.False(savedConfig.RootElement.TryGetProperty("EthereumAddress", out _));
+            Assert.False(savedConfig.RootElement.TryGetProperty("BitcoinAddress", out _));
+
             var reloadedService = new ConfigService(directory);
             Assert.Equal(service.Current.AutoUpdate, reloadedService.Current.AutoUpdate);
-            Assert.Equal(service.Current.SupportUrl, reloadedService.Current.SupportUrl);
         }
         finally
         {

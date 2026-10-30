@@ -76,4 +76,5 @@ Support is entirely optional. You can use the in-app links or one of the methods
 | — | ![Ethereum donation QR](docs/donate/ethereum-qr.png) | ![Bitcoin donation QR](docs/donate/bitcoin-qr.png) |
 
 You can also set up GitHub Sponsors, Ko-fi, or Buy Me a Coffee if you prefer a hosted
-tip page. Default in-app links can be changed in `%LocalAppData%\HibbikiUpdater\config.json`.
+tip page. The in-app PayPal and crypto destinations are built into the app and aren't
+user-configurable; they don't affect any updater features.

@@ -9,7 +9,7 @@
     <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
     <AssemblyName>HibbikiUpdater</AssemblyName>
     <RootNamespace>HibbikiUpdater</RootNamespace>
-    <Version>2.1.0</Version>
+    <Version>2.1.1</Version>
   </PropertyGroup>
 
 </Project>

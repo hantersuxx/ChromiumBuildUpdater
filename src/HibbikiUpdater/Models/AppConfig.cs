@@ -23,11 +23,6 @@ public class AppConfig
     // Scheduler Interval
     public int CheckIntervalHours { get; set; } = 6;
 
-    // Optional support links. These can be overridden in config.json.
-    public string? SupportUrl { get; set; } = "https://paypal.me/AliaksandrJoya";
-    public string? EthereumAddress { get; set; } = "0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791";
-    public string? BitcoinAddress { get; set; } = "bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr";
-
     // Cached Telemetry (Item 6)
     public string LastKnownRemoteVersion { get; set; } = "Unknown";
     public string LastKnownRemoteDate { get; set; } = "Unknown";
