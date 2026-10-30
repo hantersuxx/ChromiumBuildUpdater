@@ -5,6 +5,8 @@ namespace ChromiumBuildUpdater.Core.Models;
 /// </summary>
 public class AppConfig
 {
+    public AppTheme Theme { get; set; } = AppTheme.System;
+
     // Core user preferences (Items 1-4)
     public bool AutoUpdate { get; set; } = true;
     public bool EnableNotifications { get; set; } = true;
@@ -28,4 +30,11 @@ public class AppConfig
     public string LastKnownRemoteDate { get; set; } = "Unknown";
     public string LastKnownSource { get; set; } = "Not checked yet";
     public string LastCheckTime { get; set; } = "Never";
+}
+
+public enum AppTheme
+{
+    System,
+    Light,
+    Dark
 }

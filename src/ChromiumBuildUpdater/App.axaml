@@ -1,19 +1,56 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="ChromiumBuildUpdater.App"
-             RequestedThemeVariant="Light">
+             x:Class="ChromiumBuildUpdater.App">
 
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F3F6FB" />
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="#F6F8FC" />
+                    <SolidColorBrush x:Key="SupportBackgroundBrush" Color="#EAF0F8" />
+                    <SolidColorBrush x:Key="AddressBackgroundBrush" Color="#F3F6FB" />
+                    <SolidColorBrush x:Key="BorderBrushColor" Color="#E2E8F0" />
+                    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#24364B" />
+                    <SolidColorBrush x:Key="HeadingTextBrush" Color="#18263A" />
+                    <SolidColorBrush x:Key="BodyTextBrush" Color="#34445A" />
+                    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#68788D" />
+                    <SolidColorBrush x:Key="MutedTextBrush" Color="#8A96A7" />
+                    <SolidColorBrush x:Key="WarningTextBrush" Color="#8A5A18" />
+                    <SolidColorBrush x:Key="AccentBrush" Color="#2F6FED" />
+                    <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFF" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#111820" />
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#1C2733" />
+                    <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="#253342" />
+                    <SolidColorBrush x:Key="SupportBackgroundBrush" Color="#253342" />
+                    <SolidColorBrush x:Key="AddressBackgroundBrush" Color="#18232E" />
+                    <SolidColorBrush x:Key="BorderBrushColor" Color="#394A5C" />
+                    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#E8EEF5" />
+                    <SolidColorBrush x:Key="HeadingTextBrush" Color="#F4F7FA" />
+                    <SolidColorBrush x:Key="BodyTextBrush" Color="#D2DCE7" />
+                    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#A8B7C7" />
+                    <SolidColorBrush x:Key="MutedTextBrush" Color="#91A1B2" />
+                    <SolidColorBrush x:Key="WarningTextBrush" Color="#F0BE75" />
+                    <SolidColorBrush x:Key="AccentBrush" Color="#4A83F2" />
+                    <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFF" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
     <Application.Styles>
         <FluentTheme />
         <Style Selector="CheckBox">
-            <Setter Property="Foreground" Value="#24364B" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
         </Style>
         <Style Selector="Button">
-            <Setter Property="Foreground" Value="#24364B" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
         </Style>
         <Style Selector="Button.accent">
-            <Setter Property="Background" Value="#2F6FED" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentForegroundBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
     </Application.Styles>

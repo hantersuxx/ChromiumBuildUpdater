@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     private readonly LocalChromiumService _localChromiumService = new();
     private readonly ReleaseProviderService _releaseProviderService = new();
     private readonly UpdateCheckService _updateCheckService;
+    private readonly AppUpdateService _appUpdateService = new();
     private readonly InstallerService _installerService = new();
     private readonly DispatcherTimer _schedulerTimer = new();
     private readonly DispatcherTimer _deferredInstallTimer = new();
@@ -27,17 +28,22 @@ public partial class MainWindow : Window
 
     private ReleaseArtifact? _pendingDeferredArtifact;
     private ReleaseArtifact? _latestArtifact;
+    private AppUpdateRelease? _availableAppUpdate;
     private bool _isBusy;
     private bool _initializing;
     private bool _minimizeToTrayOnClose;
     private bool _allowClose;
     private bool _didInitialCheck;
 
-    public MainWindow()
+    public MainWindow() : this(new ConfigService())
+    {
+    }
+
+    public MainWindow(ConfigService configService)
     {
         InitializeComponent();
 
-        _configService = new ConfigService();
+        _configService = configService;
         _updateCheckService = new UpdateCheckService(
             _releaseProviderService,
             _localChromiumService,
@@ -68,10 +74,20 @@ public partial class MainWindow : Window
         _deferredInstallTimer.Tick += async (_, _) => await TryInstallDeferredUpdateAsync();
         Opened += async (_, _) =>
         {
-            if (_didInitialCheck)
-                return;
-            _didInitialCheck = true;
-            await RunUpdateCycleAsync(allowAutomaticInstall: true);
+            if (!_didInitialCheck)
+            {
+                _didInitialCheck = true;
+                await RunUpdateCycleAsync(allowAutomaticInstall: true);
+                if (App.StartupUpdateError is null)
+                {
+                    await CheckForAppUpdateAsync();
+                }
+                else
+                {
+                    AppUpdateStatusText.Text =
+                        $"The previous app update did not finish: {App.StartupUpdateError}";
+                }
+            }
         };
         Closing += (_, args) =>
         {
@@ -137,6 +153,7 @@ public partial class MainWindow : Window
 
         AddIntervalIfMissing(config.CheckIntervalHours);
         SelectInterval(config.CheckIntervalHours);
+        SelectTheme(config.Theme);
         UpdateInstalledVersion();
         UpdateAvailabilityNote();
         UpdateLastCheckedText();
@@ -220,15 +237,122 @@ public partial class MainWindow : Window
             ResetScheduler();
         };
 
+        ThemeSelector.SelectionChanged += (_, _) =>
+        {
+            if (_initializing ||
+                ThemeSelector.SelectedItem is not ComboBoxItem item ||
+                !Enum.TryParse(item.Tag?.ToString(), out AppTheme theme))
+            {
+                return;
+            }
+
+            _configService.Current.Theme = theme;
+            Application.Current!.RequestedThemeVariant = theme switch
+            {
+                AppTheme.Light => Avalonia.Styling.ThemeVariant.Light,
+                AppTheme.Dark => Avalonia.Styling.ThemeVariant.Dark,
+                _ => Avalonia.Styling.ThemeVariant.Default
+            };
+            SaveConfig();
+        };
+
         InstallButton.Click += async (_, _) =>
         {
             if (_latestArtifact is not null)
                 await InstallOrDeferAsync(_latestArtifact);
         };
+        CheckAppUpdatesButton.Click += async (_, _) => await CheckForAppUpdateAsync();
+        InstallAppUpdateButton.Click += async (_, _) => await InstallAppUpdateAsync();
         CheckNowButton.Click += async (_, _) =>
             await RunUpdateCycleAsync(allowAutomaticInstall: false);
         OpenBuildPageButton.Click += (_, _) => OpenReleasePage();
         PayPalButton.Click += (_, _) => OpenSupportPage();
+    }
+
+    private async Task CheckForAppUpdateAsync()
+    {
+        CheckAppUpdatesButton.IsEnabled = false;
+        AppUpdateStatusText.Text = "Checking GitHub for a newer app version…";
+        try
+        {
+            _availableAppUpdate = await _appUpdateService.CheckForUpdateAsync(_lifetime.Token);
+            if (_availableAppUpdate is null)
+            {
+                AppUpdateStatusText.Text = "You’re using the latest version of Chromium Build Updater.";
+                InstallAppUpdateButton.IsVisible = false;
+                return;
+            }
+
+            AppUpdateStatusText.Text = $"Version {_availableAppUpdate.Version} is available.";
+            InstallAppUpdateButton.IsVisible = true;
+            InstallAppUpdateButton.IsEnabled = true;
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException or IOException or InvalidDataException or System.Text.Json.JsonException or
+            TaskCanceledException)
+        {
+            AppUpdateStatusText.Text = $"Could not check for app updates: {ex.Message}";
+        }
+        finally
+        {
+            CheckAppUpdatesButton.IsEnabled = true;
+        }
+    }
+
+    private async Task InstallAppUpdateAsync()
+    {
+        if (_availableAppUpdate is null)
+            return;
+
+        string? executablePath = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
+        {
+            AppUpdateStatusText.Text = "The running application executable could not be located.";
+            return;
+        }
+
+        InstallAppUpdateButton.IsEnabled = false;
+        CheckAppUpdatesButton.IsEnabled = false;
+        AppUpdateStatusText.Text = $"Downloading and verifying version {_availableAppUpdate.Version}…";
+        StagedAppUpdate? stagedUpdate = null;
+        try
+        {
+            stagedUpdate = await _appUpdateService.DownloadAndVerifyAsync(
+                _availableAppUpdate, _lifetime.Token);
+            SelfUpdateLauncher.Start(stagedUpdate, executablePath, Environment.ProcessId);
+            AppUpdateStatusText.Text = "Update verified. Restarting to finish installation…";
+            _allowClose = true;
+            Close();
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException or IOException or InvalidDataException or UnauthorizedAccessException or
+            System.ComponentModel.Win32Exception or PlatformNotSupportedException or TaskCanceledException or
+            InvalidOperationException)
+        {
+            if (stagedUpdate is not null && Directory.Exists(stagedUpdate.WorkingDirectory))
+            {
+                try
+                {
+                    Directory.Delete(stagedUpdate.WorkingDirectory, recursive: true);
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
+
+            AppUpdateStatusText.Text = $"App update could not be installed: {ex.Message}";
+            InstallAppUpdateButton.IsEnabled = true;
+            CheckAppUpdatesButton.IsEnabled = true;
+        }
     }
 
     private void UpdateInstalledVersion() =>
@@ -272,6 +396,15 @@ public partial class MainWindow : Window
             .FirstOrDefault(item =>
                 int.TryParse(item.Content?.ToString()?.Split(' ')[0], out int itemHours) &&
                 itemHours == hours);
+    }
+
+    private void SelectTheme(AppTheme theme)
+    {
+        ThemeSelector.SelectedItem = ThemeSelector.Items
+            .OfType<ComboBoxItem>()
+            .FirstOrDefault(item =>
+                Enum.TryParse(item.Tag?.ToString(), out AppTheme itemTheme) &&
+                itemTheme == theme);
     }
 
     private void OpenReleasePage()

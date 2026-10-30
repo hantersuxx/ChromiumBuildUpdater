@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using System;
+using ChromiumBuildUpdater.Core.Services;
 
 namespace ChromiumBuildUpdater;
 
@@ -9,8 +10,28 @@ class Program
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
     [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
+    public static void Main(string[] args)
+    {
+        if (SelfUpdateLauncher.IsApplyRequest(args))
+        {
+            Environment.ExitCode = SelfUpdateLauncher.RunApplyRequest(args);
+            return;
+        }
+
+        string[] applicationArgs = args;
+        if (SelfUpdateLauncher.IsCleanupHelperRequest(args))
+        {
+            SelfUpdateLauncher.CleanupHelper(args);
+            applicationArgs = [];
+        }
+        else if (SelfUpdateLauncher.TryGetUpdateFailureMessage(args, out string failureMessage))
+        {
+            App.StartupUpdateError = failureMessage;
+            applicationArgs = [];
+        }
+
+        BuildAvaloniaApp().StartWithClassicDesktopLifetime(applicationArgs);
+    }
 
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()

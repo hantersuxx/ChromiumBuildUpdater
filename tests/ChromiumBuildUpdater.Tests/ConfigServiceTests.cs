@@ -19,6 +19,7 @@ public class ConfigServiceTests
             Assert.True(File.Exists(configPath));
             Assert.Equal(new AppConfig().AutoUpdate, service.Current.AutoUpdate);
             Assert.Equal(new AppConfig().CheckIntervalHours, service.Current.CheckIntervalHours);
+            Assert.Equal(AppTheme.System, service.Current.Theme);
 
             var reloadedService = new ConfigService(directory);
             Assert.Equal(service.Current.AutoUpdate, reloadedService.Current.AutoUpdate);
@@ -41,6 +42,7 @@ public class ConfigServiceTests
             service.Current.AutoUpdate = false;
             service.Current.CheckIntervalHours = 12;
             service.Current.SelectedFlavor = ChromiumFlavor.Thorium;
+            service.Current.Theme = AppTheme.Dark;
             service.Save();
 
             var reloadedService = new ConfigService(directory);
@@ -49,6 +51,7 @@ public class ConfigServiceTests
             Assert.False(reloadedService.Current.AutoUpdate);
             Assert.Equal(12, reloadedService.Current.CheckIntervalHours);
             Assert.Equal(ChromiumFlavor.Thorium, reloadedService.Current.SelectedFlavor);
+            Assert.Equal(AppTheme.Dark, reloadedService.Current.Theme);
         }
         finally
         {

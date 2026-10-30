@@ -37,6 +37,8 @@ than silently substituting a different browser.
 - On macOS, validate the app signature and Gatekeeper assessment before replacing the
   per-user application.
 - Optionally launch at sign-in using the native startup mechanism for the current OS.
+- Choose System, Light, or Dark appearance.
+- Check GitHub for updater releases and offer verified, one-click app updates.
 - Keep support links optional and fixed by the project owner.
 
 ## Download and run
@@ -80,7 +82,17 @@ and `osx-arm64`.
 
 Pull requests and pushes to `main` run the test suite on Windows, macOS, and Linux and build the
 desktop app. Pushing a `v*` tag publishes self-contained single-file packages for all five
-supported runtime identifiers, but only after every test/build job succeeds.
+supported runtime identifiers, along with a SHA-256 manifest used by the in-app updater, but
+only after every test/build job succeeds. A normal commit to `main` runs CI; it does not create
+a GitHub Release. After the `main` workflow succeeds, publish a version by pushing its tag:
+
+```powershell
+git tag v3.1.0
+git push origin v3.1.0
+```
+
+Use the version in the project files for new tags. The tag workflow runs the tests again before
+building the platform assets and creating the GitHub Release.
 
 ## Support the project
 

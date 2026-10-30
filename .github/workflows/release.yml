@@ -61,11 +61,11 @@ jobs:
       - name: Publish self-contained single-file app
         run: dotnet publish src/ChromiumBuildUpdater/ChromiumBuildUpdater.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output publish
       - name: Package Windows executable
-        if: matrix.archive == 'exe'
+        if: matrix.rid == 'win-x64'
         shell: pwsh
         run: Copy-Item publish\ChromiumBuildUpdater.exe ChromiumBuildUpdater-${{ github.ref_name }}-${{ matrix.rid }}.exe
       - name: Package Unix executable
-        if: matrix.archive == 'tar.gz'
+        if: matrix.rid != 'win-x64'
         run: tar -czf ChromiumBuildUpdater-${{ github.ref_name }}-${{ matrix.rid }}.tar.gz -C publish ChromiumBuildUpdater
       - uses: actions/upload-artifact@v4
         with:
@@ -86,6 +86,8 @@ jobs:
           pattern: release-*
           path: release-assets
           merge-multiple: true
+      - name: Create SHA-256 manifest
+        run: cd release-assets && sha256sum * > SHA256SUMS.txt
       - uses: softprops/action-gh-release@v2
         with:
           name: Chromium Build Updater ${{ github.ref_name }}
