@@ -1,6 +1,6 @@
 # HibbikiUpdater
 
-### Keep your Chromium browser builds up to date, right from the Windows system tray.
+### Keep Hibbiki Chromium, Ungoogled Chromium, and Thorium up to date from the Windows system tray.
 
 [![Build and publish release](https://github.com/hantersuxx/HibbikiUpdater/actions/workflows/release.yml/badge.svg)](https://github.com/hantersuxx/HibbikiUpdater/actions/workflows/release.yml)
 [![Latest release](https://img.shields.io/github/v/release/hantersuxx/HibbikiUpdater?display_name=tag)](https://github.com/hantersuxx/HibbikiUpdater/releases/latest)
@@ -62,19 +62,26 @@ dotnet test HibbikiUpdater.sln -c Release
 
 ## Releases
 
-Pushing a `v*` tag runs the tests and publishes a self-contained Windows x64 `.exe`
-to the [GitHub Releases page](https://github.com/hantersuxx/HibbikiUpdater/releases).
-The repository's GitHub Actions workflow builds it from source.
+Tests run automatically for pull requests targeting `main`, pushes to `main`, and
+version tags. Pushing a `v*` tag publishes a self-contained Windows x64 `.exe` to the
+[GitHub Releases page](https://github.com/hantersuxx/HibbikiUpdater/releases), but only
+after the test job passes.
 
 ## Support the project
 
-Support is entirely optional. You can use the in-app links or one of the methods below:
+If you find HibbikiUpdater useful, you can support its development. Donations are
+optional and never unlock or restrict app features.
 
-| PayPal | Ethereum | Bitcoin |
-|---|---|---|
-| [paypal.me/AliaksandrJoya](https://paypal.me/AliaksandrJoya) | `0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791` | `bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr` |
-| — | ![Ethereum donation QR](docs/donate/ethereum-qr.png) | ![Bitcoin donation QR](docs/donate/bitcoin-qr.png) |
+- **PayPal:** [paypal.me/AliaksandrJoya](https://paypal.me/AliaksandrJoya)
 
-You can also set up GitHub Sponsors, Ko-fi, or Buy Me a Coffee if you prefer a hosted
-tip page. The in-app PayPal and crypto destinations are built into the app and aren't
-user-configurable; they don't affect any updater features.
+<p align="center">
+  <img src="docs/donate/ethereum-qr.png" width="140" alt="Ethereum donation QR code">
+  &nbsp;
+  <img src="docs/donate/bitcoin-qr.png" width="140" alt="Bitcoin donation QR code">
+</p>
+
+**Ethereum:** `0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791`<br>
+**Bitcoin:** `bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr`
+
+The in-app support destinations are fixed by the project owner. They aren't user
+settings and have no effect on updates.
