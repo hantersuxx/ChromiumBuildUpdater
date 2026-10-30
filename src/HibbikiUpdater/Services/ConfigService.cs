@@ -12,11 +12,8 @@ namespace HibbikiUpdater.Services;
 /// </summary>
 public class ConfigService
 {
-    private static readonly string ConfigDirectory = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "HibbikiUpdater");
-
-    private static readonly string ConfigFilePath = Path.Combine(ConfigDirectory, "config.json");
+    private readonly string _configDirectory;
+    private readonly string _configFilePath;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -28,8 +25,20 @@ public class ConfigService
     public string? LastError { get; private set; }
 
     public ConfigService()
+        : this(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "HibbikiUpdater"))
     {
+    }
+
+    public ConfigService(string configDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(configDirectory);
+        _configDirectory = configDirectory;
+        _configFilePath = Path.Combine(configDirectory, "config.json");
         Current = Load();
+        if (!File.Exists(_configFilePath))
+            Save();
     }
 
     public AppConfig Load()
@@ -37,9 +46,9 @@ public class ConfigService
         LastError = null;
         try
         {
-            if (File.Exists(ConfigFilePath))
+            if (File.Exists(_configFilePath))
             {
-                string json = File.ReadAllText(ConfigFilePath);
+                string json = File.ReadAllText(_configFilePath);
                 var loaded = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
                 if (loaded != null)
                 {
@@ -63,11 +72,11 @@ public class ConfigService
         string? tempFilePath = null;
         try
         {
-            Directory.CreateDirectory(ConfigDirectory);
+            Directory.CreateDirectory(_configDirectory);
             string json = JsonSerializer.Serialize(Current, JsonOptions);
-            tempFilePath = Path.Combine(ConfigDirectory, $"config-{Guid.NewGuid():N}.tmp");
+            tempFilePath = Path.Combine(_configDirectory, $"config-{Guid.NewGuid():N}.tmp");
             File.WriteAllText(tempFilePath, json);
-            File.Move(tempFilePath, ConfigFilePath, overwrite: true);
+            File.Move(tempFilePath, _configFilePath, overwrite: true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException)
         {

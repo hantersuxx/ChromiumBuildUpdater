@@ -1,82 +1,79 @@
-# Chromium Tray Updater v2 (.NET 10 WinForms)
+# HibbikiUpdater
 
-A native, low-memory (~15 MB RAM) Windows system-tray application that replaces the legacy `chrupd` scheduled task. It supports **Hibbiki Chromium**, **Ungoogled-Chromium**, and **Thorium Browser** with automatic **Dual-Source Failover** between official GitHub Releases APIs and the rate-limit-free `chromiumbuilds.org` JSON API.
+### Keep your Chromium browser builds up to date, right from the Windows system tray.
 
-## Included Features
+[![Build and publish release](https://github.com/hantersuxx/HibbikiUpdater/actions/workflows/release.yml/badge.svg)](https://github.com/hantersuxx/HibbikiUpdater/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/hantersuxx/HibbikiUpdater?display_name=tag)](https://github.com/hantersuxx/HibbikiUpdater/releases/latest)
+![Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 
-1. **Background Auto-Update (`AutoUpdate`)**: Periodically polls for newer builds and installs them silently.
-2. **Windows System Tray Notifications (`EnableNotifications`)**: Optional balloon/toast alerts for available updates, deferred updates, and completed installations.
-3. **Minimize-to-Tray on Close (`MinimizeToTrayOnClose`)**: Clicking the window `X` hides the app to the tray instead of terminating the background scheduler.
-4. **Launch on Windows Startup (`StartWithWindows`)**: Automatically registers `"HibbikiUpdater.exe" --minimized` in `HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`.
-5. **Manual Controls**: Dedicated **Check Only** and **Force Update Now** buttons (available both in the main UI and the right-click tray menu).
-6. **Live Artifact Telemetry**: Displays local installed version, remote artifact version, SHA-256 verification status, artifact publication timestamp, active feed source, and last check time.
-7. **Updater safeguards**:
-   - **Active Process Guard (`DeferIfChromiumRunning`)**: Detects if `chrome.exe` or `thorium.exe` is currently open. When enabled, background updates are queued and a 60-second watchdog automatically installs the update the moment you close the browser.
-   - **Required SHA-256 Checksum Verification**: Blocks installation when a release has no valid SHA-256 digest or the downloaded installer does not match it.
-   - **Dual-Source Failover (`ReleaseProviderService`)**: Queries official GitHub Releases APIs first and automatically falls back to `https://chromiumbuilds.org/api/v1/windows.json` and `https://chromiumbuilds.org/api/v1/latest.json` if GitHub rate-limits your IP. Also includes a checkbox to prefer `chromiumbuilds.org` directly.
-   - **Local Installed Version Detection (`LocalChromiumService`)**: Reads `FileVersionInfo.ProductVersion` directly from `%LocalAppData%\Chromium\Application\chrome.exe` (or `Thorium\Application\thorium.exe`).
-8. **Multi-Build Dropdown (`ChromiumFlavor`)**: Switch seamlessly between **Hibbiki Chromium**, **Ungoogled-Chromium**, and **Thorium Browser (AVX2)**.
+**HibbikiUpdater** is a lightweight Windows tray app for keeping **Hibbiki Chromium**,
+**Ungoogled Chromium**, and **Thorium** current. It checks for new builds, verifies
+downloads with SHA-256, and can install updates automatically or wait until the
+browser is closed.
 
-## Opening in JetBrains Rider or Visual Studio
-1. Extract `HibbikiUpdater_Solution-v2.zip`.
-2. Open `HibbikiUpdater.sln` in **JetBrains Rider** or **Visual Studio 2022+**.
-3. Run (`F5`) or compile a single-file executable via PowerShell:
-   ```powershell
-   dotnet publish src/HibbikiUpdater/HibbikiUpdater.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
-   ```
+<p align="center">
+  <a href="https://github.com/hantersuxx/HibbikiUpdater/releases/latest"><strong>Download the latest Windows app</strong></a>
+  &nbsp;·&nbsp;
+  <a href="#getting-started">Getting started</a>
+  &nbsp;·&nbsp;
+  <a href="#support-the-project">Support the project</a>
+</p>
 
-## Tests
+## At a glance
 
-Run the unit and service integration tests with:
+| Browser builds | Safe updates | Runs quietly |
+|---|---|---|
+| Hibbiki Chromium, Ungoogled Chromium, Thorium (AVX2) | SHA-256 verification, browser-running guard, GitHub/builds API failover | System tray, optional notifications, configurable schedule |
+
+### What it does
+
+- Checks for updates on a schedule or whenever you ask.
+- Automatically installs updates, or defers while Chromium is running.
+- Verifies installer checksums before installation.
+- Shows installed/latest versions, release date, source, and check status.
+- Can start with Windows and minimize to the system tray.
+- Includes optional PayPal and crypto links; donations never unlock or restrict features.
+
+## Getting started
+
+1. **[Download the latest single-file Windows executable](https://github.com/hantersuxx/HibbikiUpdater/releases/latest).**
+2. Run `HibbikiUpdater-v*-win-x64.exe`. It is self-contained; you don't need to install .NET.
+3. On first launch, the app creates its default settings at `%LocalAppData%\HibbikiUpdater\config.json`.
+4. Choose a browser build and adjust update behavior in the app.
+
+The app targets **Windows x64**. SmartScreen may show a warning for a new or unsigned
+release; only download the executable from this repository's Releases page.
+
+## Build from source
+
+Open `HibbikiUpdater.sln` in Visual Studio 2022+ or JetBrains Rider with the .NET 10
+SDK installed. To build a self-contained, single-file Windows executable:
 
 ```powershell
-dotnet test HibbikiUpdater.sln
+dotnet publish src/HibbikiUpdater/HibbikiUpdater.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true
 ```
 
-## GitHub Releases
-
-The source is published at
-[github.com/hantersuxx/HibbikiUpdater](https://github.com/hantersuxx/HibbikiUpdater).
-To publish a downloadable Windows release, update the project version in
-`src/HibbikiUpdater/HibbikiUpdater.csproj`, then create and push a matching tag
-from the repository root. For example, for version `2.0.0`:
+Run the unit and service integration tests:
 
 ```powershell
-git tag v2.0.0
-git push origin v2.0.0
+dotnet test HibbikiUpdater.sln -c Release
 ```
 
-The `.github/upgrades` working artifacts are intentionally excluded from source
-control. The repository is public, so anyone can download its source and releases.
+## Releases
 
-The GitHub Actions workflow runs the test suite and then publishes a self-contained
-Windows x64 ZIP whenever a version tag is pushed. When the workflow succeeds, the
-downloadable ZIP and generated release notes appear under the repository's
-**Releases** page. For each later release, update the project version, then create
-and push a tag with the matching version (for example, `v2.1.0`).
+Pushing a `v*` tag runs the tests and publishes a self-contained Windows x64 `.exe`
+to the [GitHub Releases page](https://github.com/hantersuxx/HibbikiUpdater/releases).
+The repository's GitHub Actions workflow builds it from source.
 
-## Optional project support
+## Support the project
 
-The app includes a small, optional support row with PayPal and copy-to-clipboard
-links for Ethereum and Bitcoin. Supporting is entirely voluntary and has no effect
-on app features. The defaults can be customized in
-`%LocalAppData%\HibbikiUpdater\config.json`:
-
-```json
-{
-  "SupportUrl": "https://paypal.me/AliaksandrJoya",
-  "EthereumAddress": "0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791",
-  "BitcoinAddress": "bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr"
-}
-```
-
-**Other easy options:** GitHub Sponsors adds a native sponsor button to the repo
-(if available for your account); Ko-fi and Buy Me a Coffee provide hosted tip pages;
-Open Collective is useful if you want transparent community finances. A hosted
-page can consolidate PayPal and card payments, while keeping the crypto addresses
-as optional alternatives.
+Support is entirely optional. You can use the in-app links or one of the methods below:
 
 | PayPal | Ethereum | Bitcoin |
 |---|---|---|
 | [paypal.me/AliaksandrJoya](https://paypal.me/AliaksandrJoya) | `0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791` | `bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr` |
 | — | ![Ethereum donation QR](docs/donate/ethereum-qr.png) | ![Bitcoin donation QR](docs/donate/bitcoin-qr.png) |
+
+You can also set up GitHub Sponsors, Ko-fi, or Buy Me a Coffee if you prefer a hosted
+tip page. Default in-app links can be changed in `%LocalAppData%\HibbikiUpdater\config.json`.
