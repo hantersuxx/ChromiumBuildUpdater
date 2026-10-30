@@ -35,32 +35,25 @@ dotnet test HibbikiUpdater.sln
 
 ## GitHub Releases
 
-Create an empty GitHub repository named `HibbikiUpdater` (do not initialize it
-with another README or `.gitignore`), then connect this local repository and push
-the initial branch:
+The source is published at
+[github.com/hantersuxx/HibbikiUpdater](https://github.com/hantersuxx/HibbikiUpdater).
+To publish a downloadable Windows release, update the project version in
+`src/HibbikiUpdater/HibbikiUpdater.csproj`, then create and push a matching tag
+from the repository root. For example, for version `2.0.0`:
 
 ```powershell
-git add .
-git commit -m "Initial HibbikiUpdater source"
-git remote add origin https://github.com/YOUR-OWNER/HibbikiUpdater.git
-git push -u origin main
+git tag v2.0.0
+git push origin v2.0.0
 ```
 
 The `.github/upgrades` working artifacts are intentionally excluded from source
-control. For downloadable releases, keep the repository public or grant download
-access to the intended audience.
+control. The repository is public, so anyone can download its source and releases.
 
 The GitHub Actions workflow runs the test suite and then publishes a self-contained
-Windows x64 ZIP whenever a version tag is pushed. Create a version tag and push it:
-
-```powershell
-git tag v2.1.0
-git push origin v2.1.0
-```
-
-When the workflow succeeds, the downloadable ZIP and generated release notes appear
-under the repository's **Releases** page. To release a new version, update the
-project version, create a new tag, and push that tag.
+Windows x64 ZIP whenever a version tag is pushed. When the workflow succeeds, the
+downloadable ZIP and generated release notes appear under the repository's
+**Releases** page. For each later release, update the project version, then create
+and push a tag with the matching version (for example, `v2.1.0`).
 
 ## Optional project support
 
