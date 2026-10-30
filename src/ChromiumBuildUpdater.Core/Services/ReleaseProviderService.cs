@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -25,6 +26,11 @@ public class ReleaseProviderService
 
     private const string ChromiumBuildsLatestJsonUrl = "https://chromiumbuilds.org/api/v1/latest.json";
     private const string ChromiumBuildsWindowsJsonUrl = "https://chromiumbuilds.org/api/v1/windows.json";
+    private static readonly string[] ChromiumBuildsEndpoints =
+    [
+        ChromiumBuildsWindowsJsonUrl,
+        ChromiumBuildsLatestJsonUrl
+    ];
 
     private static readonly HttpClient SharedHttp = new()
     {
@@ -90,7 +96,7 @@ public class ReleaseProviderService
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableFeedFailure(ex))
             {
                 errors.Add($"GitHub API ({ex.Message})");
             }
@@ -105,7 +111,7 @@ public class ReleaseProviderService
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (IsRecoverableFeedFailure(ex))
         {
             errors.Add($"chromiumbuilds.org ({ex.Message})");
         }
@@ -121,7 +127,7 @@ public class ReleaseProviderService
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableFeedFailure(ex))
             {
                 errors.Add($"GitHub Backup ({ex.Message})");
             }
@@ -193,6 +199,7 @@ public class ReleaseProviderService
             _ => throw new PlatformNotSupportedException("Thorium is currently not offered for this platform.")
         };
 
+        var errors = new List<string>();
         foreach (string url in candidateUrls)
         {
             try
@@ -210,13 +217,14 @@ public class ReleaseProviderService
             {
                 throw;
             }
-            catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or JsonException)
+            catch (Exception ex) when (IsRecoverableFeedFailure(ex))
             {
-                // Try next Thorium repo
+                errors.Add($"{url}: {ex.Message}");
             }
         }
 
-        throw new InvalidOperationException("No supported Thorium release asset was found for this platform.");
+        throw new InvalidOperationException(
+            $"All Thorium release feeds failed: {string.Join(" | ", errors)}");
     }
 
     private Func<GitHubAssetResponse, bool> CreateThoriumLinuxAssetSelector()
@@ -271,9 +279,9 @@ public class ReleaseProviderService
             ChromiumFlavor.Thorium => "thorium",
             _ => "hibbiki"
         };
+        var errors = new List<string>();
 
-        // Try /api/v1/windows.json first because it contains full x64 installer details + sha256
-        foreach (string endpoint in new[] { ChromiumBuildsWindowsJsonUrl, ChromiumBuildsLatestJsonUrl })
+        foreach (string endpoint in ChromiumBuildsEndpoints)
         {
             try
             {
@@ -282,28 +290,33 @@ public class ReleaseProviderService
                 await using var stream = await response.Content.ReadAsStreamAsync(ct);
                 using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
 
-                var matched = TryParseChromiumBuildsDocument(doc.RootElement, flavor, searchKeyword, endpoint);
+                var matched = TryParseChromiumBuildsDocument(doc.RootElement, flavor, searchKeyword);
                 if (matched != null)
                     return matched;
+
+                errors.Add($"{endpoint}: no matching x64 installer was found.");
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 throw;
             }
-            catch
+            catch (Exception ex) when (IsRecoverableFeedFailure(ex))
             {
-                // Continue to next chromiumbuilds.org endpoint
+                errors.Add($"{endpoint}: {ex.Message}");
             }
         }
 
-        throw new InvalidOperationException($"Could not locate {flavor} x64 installer in chromiumbuilds.org JSON feeds.");
+        string details = errors.Count == 0
+            ? "No matching x64 installer was found in the feeds."
+            : string.Join(" | ", errors);
+        throw new InvalidOperationException(
+            $"Could not locate {flavor} x64 installer in chromiumbuilds.org JSON feeds. {details}");
     }
 
     private static ReleaseArtifact? TryParseChromiumBuildsDocument(
         JsonElement root,
         ChromiumFlavor flavor,
-        string keyword,
-        string endpointUrl)
+        string keyword)
     {
         IEnumerable<JsonElement> rows = EnumerateBuildCandidates(root);
 
@@ -326,8 +339,12 @@ public class ReleaseProviderService
 
             string rawVersion = GetStringProp(item, "version", "latest_version", "tag");
             string dateStr = GetStringProp(item, "updated", "published", "published_at", "date", "built");
-            DateTime publishedUtc = DateTime.TryParse(dateStr, out var parsedDate)
-                ? parsedDate.ToUniversalTime()
+            DateTime publishedUtc = DateTimeOffset.TryParse(
+                dateStr,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal,
+                out DateTimeOffset parsedDate)
+                ? parsedDate.UtcDateTime
                 : DateTime.UtcNow;
 
             // Case A: Flat row in latest.json ("url", "download_url", "installer_url")
@@ -421,4 +438,6 @@ public class ReleaseProviderService
         return string.Empty;
     }
 
+    private static bool IsRecoverableFeedFailure(Exception exception) =>
+        exception is HttpRequestException or JsonException or InvalidOperationException or OperationCanceledException;
 }

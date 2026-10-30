@@ -71,7 +71,7 @@ public class ReleaseProviderServiceTests
                         "id": "hibbiki-chromium",
                         "arch": "x64",
                         "version": "v156.0.8078.74",
-                        "updated": "2026-10-28T23:19:00Z",
+                        "updated": "2026-10-28T23:19:00+02:00",
                         "downloads": [
                           {
                             "url": "{{downloadUrl}}",
@@ -91,6 +91,7 @@ public class ReleaseProviderServiceTests
         ReleaseArtifact artifact = await service.FetchLatestReleaseAsync(ChromiumFlavor.Hibbiki);
 
         Assert.Equal("156.0.8078.74", artifact.CleanVersion);
+        Assert.Equal(new DateTime(2026, 10, 28, 21, 19, 0, DateTimeKind.Utc), artifact.PublishedAtUtc);
         Assert.Equal(downloadUrl, artifact.DownloadUrl);
         Assert.Equal(checksum, artifact.ExpectedSha256);
         Assert.Equal("Failover (chromiumbuilds.org/api/v1/windows.json)", artifact.SourceName);
@@ -98,6 +99,35 @@ public class ReleaseProviderServiceTests
             handler.RequestUris,
             uri => Assert.Equal(githubUrl, uri.AbsoluteUri),
             uri => Assert.Equal(fallbackUrl, uri.AbsoluteUri));
+    }
+
+    [Fact]
+    public async Task FetchLatestReleaseAsync_IncludesAllFallbackErrorsInFinalException()
+    {
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)));
+        var service = new ReleaseProviderService(httpClient, HostPlatform.Windows, Architecture.X64, true);
+
+        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.FetchLatestReleaseAsync(ChromiumFlavor.Hibbiki));
+
+        Assert.Contains("chromiumbuilds.org/api/v1/windows.json", error.Message);
+        Assert.Contains("chromiumbuilds.org/api/v1/latest.json", error.Message);
+        Assert.Contains("GitHub API", error.Message);
+    }
+
+    [Fact]
+    public async Task FetchLatestReleaseAsync_ReportsEachFailedThoriumFeed()
+    {
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)));
+        var service = new ReleaseProviderService(httpClient, HostPlatform.Windows, Architecture.X64, true);
+
+        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.FetchLatestReleaseAsync(ChromiumFlavor.Thorium));
+
+        Assert.Contains("gz83/thorium", error.Message);
+        Assert.Contains("Alex313031/Thorium-Win", error.Message);
     }
 
     [Fact]

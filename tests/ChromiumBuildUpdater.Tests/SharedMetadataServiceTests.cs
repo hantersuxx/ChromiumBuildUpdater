@@ -8,6 +8,7 @@ public class SharedMetadataServiceTests
     [InlineData("v156.0.8078.74", "156.0.8078.74")]
     [InlineData("M156.0.8078.74-beta1", "156.0.8078.74")]
     [InlineData("156.0.8078.74", "156.0.8078.74")]
+    [InlineData("Version 156.0.8078.74", "Version 156.0.8078.74")]
     public void NormalizeReleaseVersion_UsesCanonicalNumericVersion(string input, string expected)
     {
         Assert.Equal(expected, VersionService.NormalizeReleaseVersion(input));

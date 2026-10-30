@@ -20,6 +20,18 @@ public class InstallerServiceTests
     }
 
     [Fact]
+    public void ValidateArtifact_RejectsHttpsUrlsWithCredentials()
+    {
+        ReleaseArtifact artifact = CreateArtifact(
+            downloadUrl: "https://user:password@example.test/installer.exe");
+
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+            () => InstallerService.ValidateArtifact(artifact, HostPlatform.Windows));
+
+        Assert.Contains("valid HTTPS URL", error.Message);
+    }
+
+    [Fact]
     public void ValidateArtifact_RequiresChecksum()
     {
         ReleaseArtifact artifact = CreateArtifact(checksum: null);
@@ -84,6 +96,20 @@ public class InstallerServiceTests
 
         Assert.Throws<PlatformNotSupportedException>(
             () => InstallerService.ValidateArtifact(artifact, HostPlatform.Windows));
+    }
+
+    [Theory]
+    [InlineData(HostPlatform.Linux, ChromiumFlavor.UngoogledChromium, "https://example.test/installer.AppImage")]
+    [InlineData(HostPlatform.MacOS, ChromiumFlavor.Thorium, "https://example.test/installer.dmg")]
+    public void ValidateArtifact_RejectsBuildsWithoutVerifiedPlatformSupport(
+        HostPlatform platform,
+        ChromiumFlavor flavor,
+        string downloadUrl)
+    {
+        ReleaseArtifact artifact = CreateArtifact(downloadUrl, flavor: flavor);
+
+        Assert.Throws<PlatformNotSupportedException>(
+            () => InstallerService.ValidateArtifact(artifact, platform));
     }
 
     [Fact]

@@ -14,7 +14,14 @@ public static class VersionService
         if (string.IsNullOrWhiteSpace(rawTag))
             return "0.0.0.0";
 
-        string cleaned = rawTag.Trim().TrimStart('v', 'V', 'M', 'm');
+        string cleaned = rawTag.Trim();
+        if (cleaned.Length > 1 &&
+            cleaned[0] is 'v' or 'V' or 'm' or 'M' &&
+            char.IsDigit(cleaned[1]))
+        {
+            cleaned = cleaned[1..];
+        }
+
         int dashIndex = cleaned.IndexOf('-');
         return dashIndex > 0 ? cleaned[..dashIndex] : cleaned;
     }
