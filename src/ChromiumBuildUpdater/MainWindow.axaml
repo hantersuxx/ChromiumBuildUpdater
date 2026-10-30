@@ -33,7 +33,7 @@
               <StackPanel Spacing="6">
                 <TextBlock Text="Browser build" FontSize="14" FontWeight="SemiBold"
                            Foreground="#34445A"/>
-                <ComboBox x:Name="FlavorSelector" MinWidth="250"/>
+                <ComboBox x:Name="FlavorSelector" MinWidth="250" Foreground="#24364B"/>
               </StackPanel>
               <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="6">
                 <TextBlock Text="Platform" FontSize="14" FontWeight="SemiBold"
@@ -85,7 +85,8 @@
 
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
               <Button x:Name="InstallButton" Content="Install update" Classes="accent"
-                      IsEnabled="False" HorizontalAlignment="Stretch" MinHeight="42"/>
+                      IsEnabled="False" HorizontalAlignment="Stretch" MinHeight="42"
+                      Foreground="White"/>
               <Button x:Name="CheckNowButton" Grid.Column="1" Content="Check now"
                       MinHeight="42" MinWidth="120"/>
               <Button x:Name="OpenBuildPageButton" Grid.Column="2" Content="Release page"
@@ -99,17 +100,20 @@
           <StackPanel Spacing="14">
             <TextBlock Text="Update behavior" FontSize="18" FontWeight="SemiBold"
                        Foreground="#24364B"/>
-            <CheckBox x:Name="AutoUpdateCheckBox" Content="Install updates automatically when available"/>
+            <CheckBox x:Name="AutoUpdateCheckBox" Content="Install updates automatically when available"
+                      Foreground="#24364B"/>
             <CheckBox x:Name="DeferWhileRunningCheckBox"
-                      Content="Wait until the selected browser is closed before installing"/>
-            <CheckBox x:Name="StartWithSystemCheckBox" Content="Launch Chromium Build Updater at sign-in"/>
+                      Content="Wait until the selected browser is closed before installing"
+                      Foreground="#24364B"/>
+            <CheckBox x:Name="StartWithSystemCheckBox" Content="Launch Chromium Build Updater at sign-in"
+                      Foreground="#24364B"/>
             <CheckBox x:Name="MinimizeToTrayCheckBox" Content="Minimize to the system tray when closed"
-                      IsVisible="False"/>
+                      IsVisible="False" Foreground="#24364B"/>
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
               <TextBlock Text="Check every" VerticalAlignment="Center" FontSize="13"
                          Foreground="#526277"/>
               <ComboBox x:Name="IntervalSelector" Grid.Column="1" HorizontalAlignment="Left"
-                        MinWidth="120">
+                        MinWidth="120" Foreground="#24364B">
                 <ComboBoxItem Content="1 hour"/>
                 <ComboBoxItem Content="3 hours"/>
                 <ComboBoxItem Content="6 hours"/>
@@ -133,11 +137,11 @@
             <TextBlock Grid.Row="1" Text="Ethereum" FontSize="12" Foreground="#68788D"/>
             <TextBox x:Name="EthereumAddressText" Grid.Row="1" Grid.Column="1"
                      IsReadOnly="True" Text="0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791"
-                     MinWidth="320" FontSize="12"/>
+                     MinWidth="320" FontSize="12" Foreground="#24364B" Background="#F3F6FB"/>
             <TextBlock Grid.Row="2" Text="Bitcoin" FontSize="12" Foreground="#68788D"/>
             <TextBox x:Name="BitcoinAddressText" Grid.Row="2" Grid.Column="1"
                      IsReadOnly="True" Text="bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr"
-                     MinWidth="320" FontSize="12"/>
+                     MinWidth="320" FontSize="12" Foreground="#24364B" Background="#F3F6FB"/>
           </Grid>
         </Border>
 
