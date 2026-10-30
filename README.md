@@ -1,85 +1,93 @@
-# HibbikiUpdater
+# Chromium Build Updater
 
-### A Windows tray app that checks for and installs updates to Hibbiki Chromium, Ungoogled Chromium, and Thorium.
+**A small desktop app for checking and installing selected Chromium builds on Windows, macOS, and Linux.**
 
-[![Build and publish release](https://github.com/hantersuxx/HibbikiUpdater/actions/workflows/release.yml/badge.svg)](https://github.com/hantersuxx/HibbikiUpdater/actions/workflows/release.yml)
-[![Latest release](https://img.shields.io/github/v/release/hantersuxx/HibbikiUpdater?display_name=tag)](https://github.com/hantersuxx/HibbikiUpdater/releases/latest)
-![Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)
+[![Build, test, and publish](https://github.com/hantersuxx/ChromiumBuildUpdater/actions/workflows/release.yml/badge.svg)](https://github.com/hantersuxx/ChromiumBuildUpdater/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/hantersuxx/ChromiumBuildUpdater?display_name=tag)](https://github.com/hantersuxx/ChromiumBuildUpdater/releases/latest)
+![Windows, macOS, Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-526A8A)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 
-**HibbikiUpdater** checks for new browser builds, verifies installers with SHA-256,
-and can install updates automatically or wait until the browser is closed.
+The app checks upstream release feeds, shows the version and source, and installs an update
+only after validating its SHA-256 checksum. You can check manually, enable automatic updates,
+or wait for the browser to close before an install.
 
-<p align="center">
-  <a href="https://github.com/hantersuxx/HibbikiUpdater/releases/latest"><strong>Download the latest Windows app</strong></a>
-  &nbsp;·&nbsp;
-  <a href="#getting-started">Getting started</a>
-  &nbsp;·&nbsp;
-  <a href="#support-the-project">Support the project</a>
-</p>
+## Supported builds
 
-## At a glance
+Support depends on whether a build has a verifiable upstream release for that operating system:
 
-| Browser builds | Safe updates | Runs quietly |
+| Operating system | Available builds | Install format |
 |---|---|---|
-| Hibbiki Chromium, Ungoogled Chromium, Thorium (AVX2) | SHA-256 verification, browser-running guard, GitHub/builds API failover | System tray, optional notifications, configurable schedule |
+| Windows x64 | Hibbiki Chromium, Ungoogled Chromium, Thorium | Upstream `.exe` installer |
+| macOS x64 / Apple silicon | Ungoogled Chromium | Signed and notarized `.dmg`; Gatekeeper checks before install |
+| Linux x64 / ARM64 | Thorium | Per-user `.AppImage` |
 
-### What it does
+Hibbiki does not publish macOS or Linux builds in the checked feeds. The available Ungoogled
+Linux binaries are contributor-submitted, so the app does not install them. Thorium Linux
+releases are beta builds published by a community contributor; review the upstream release
+before choosing them. Other flavor/platform combinations are intentionally unavailable rather
+than silently substituting a different browser.
 
-- Checks for updates on a schedule or whenever you ask.
-- Automatically installs updates, or defers while Chromium is running.
-- Verifies installer checksums before installation.
-- Shows installed/latest versions, release date, source, and check status.
-- Can start with Windows and minimize to the system tray.
-- Includes optional PayPal and crypto links; donations never unlock or restrict features.
+## What it does
 
-## Getting started
+- Check manually or on a schedule.
+- Optionally install new versions automatically.
+- Defer an install while the selected browser is running.
+- Verify the exact selected asset with SHA-256 before installation.
+- Install Linux AppImages per user, without root or package-manager changes.
+- On macOS, validate the app signature and Gatekeeper assessment before replacing the
+  per-user application.
+- Optionally launch at sign-in using the native startup mechanism for the current OS.
+- Keep support links optional and fixed by the project owner.
 
-1. **[Download the latest single-file Windows executable](https://github.com/hantersuxx/HibbikiUpdater/releases/latest).**
-2. Run `HibbikiUpdater-v*-win-x64.exe`. It is self-contained; you don't need to install .NET.
-3. On first launch, the app creates its default settings at `%LocalAppData%\HibbikiUpdater\config.json`.
-4. Choose a browser build and adjust update behavior in the app.
+## Download and run
 
-The app targets **Windows x64**. SmartScreen may show a warning for a new or unsigned
-release; only download the executable from this repository's Releases page.
+Download the archive or executable for your platform from
+[GitHub Releases](https://github.com/hantersuxx/ChromiumBuildUpdater/releases/latest).
 
-## Build from source
+- **Windows:** run `ChromiumBuildUpdater-v*-win-x64.exe`.
+- **Linux:** extract the matching `linux-x64` or `linux-arm64` `.tar.gz` and run
+  `ChromiumBuildUpdater`.
+- **macOS:** extract the matching `osx-x64` or `osx-arm64` `.tar.gz` and run
+  `ChromiumBuildUpdater`. The app itself is currently distributed unsigned, so macOS may
+  require the usual Gatekeeper approval for software downloaded directly from GitHub.
 
-Open `HibbikiUpdater.sln` in Visual Studio 2022+ or JetBrains Rider with the .NET 10
-SDK installed. To build a self-contained, single-file Windows executable:
+The app creates default settings on first launch. On Windows, existing settings are migrated
+from `%LocalAppData%\HibbikiUpdater\config.json`; the new file is saved under
+`%LocalAppData%\ChromiumBuildUpdater\config.json`. macOS and Linux use their standard
+per-user configuration directories.
+
+## Build and test
+
+Install the .NET 10 SDK, then run:
 
 ```powershell
-dotnet publish src/HibbikiUpdater/HibbikiUpdater.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true
+dotnet build ChromiumBuildUpdater.sln --configuration Release
+dotnet test ChromiumBuildUpdater.sln --configuration Release
 ```
 
-Run the unit and service integration tests:
+Publish a self-contained single-file app for a runtime identifier:
 
 ```powershell
-dotnet test HibbikiUpdater.sln -c Release
+dotnet publish src/ChromiumBuildUpdater/ChromiumBuildUpdater.csproj `
+  --configuration Release --runtime win-x64 --self-contained true `
+  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-## Releases
+Supported release runtime identifiers are `win-x64`, `linux-x64`, `linux-arm64`, `osx-x64`,
+and `osx-arm64`.
 
-Tests run automatically for pull requests targeting `main`, pushes to `main`, and
-version tags. Pushing a `v*` tag publishes a self-contained Windows x64 `.exe` to the
-[GitHub Releases page](https://github.com/hantersuxx/HibbikiUpdater/releases), but only
-after the test job passes.
+## Releases and checks
+
+Pull requests and pushes to `main` run the test suite on Windows, macOS, and Linux and build the
+desktop app. Pushing a `v*` tag publishes self-contained single-file packages for all five
+supported runtime identifiers, but only after every test/build job succeeds.
 
 ## Support the project
 
-If you find HibbikiUpdater useful, you can support its development. Donations are
-optional and never unlock or restrict app features.
+Support is optional; the app is free to use and donations never unlock or restrict features.
 
 - **PayPal:** [paypal.me/AliaksandrJoya](https://paypal.me/AliaksandrJoya)
+- **Ethereum:** `0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791`
+- **Bitcoin:** `bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr`
 
-<p align="center">
-  <img src="docs/donate/ethereum-qr.png" width="140" alt="Ethereum donation QR code">
-  &nbsp;
-  <img src="docs/donate/bitcoin-qr.png" width="140" alt="Bitcoin donation QR code">
-</p>
-
-**Ethereum:** `0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791`<br>
-**Bitcoin:** `bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr`
-
-The in-app support destinations are fixed by the project owner. They aren't user
-settings and have no effect on updates.
+The in-app destinations are fixed and are not user settings.

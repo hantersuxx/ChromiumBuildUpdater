@@ -1,0 +1,150 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="ChromiumBuildUpdater.MainWindow"
+        Title="Chromium Build Updater"
+        Width="900"
+        Height="760"
+        MinWidth="620"
+        MinHeight="620"
+        Background="#F3F6FB">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid MaxWidth="960" Margin="32">
+      <StackPanel Spacing="20">
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+          <Border Width="54" Height="54" CornerRadius="16" Background="#243C5A">
+            <TextBlock Text="CB" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       FontSize="20" FontWeight="Bold" Foreground="White"/>
+          </Border>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+            <TextBlock Text="Chromium Build Updater" FontSize="26" FontWeight="Bold"
+                       Foreground="#18263A"/>
+            <TextBlock Text="Track trusted builds. Review each update. Stay in control."
+                       FontSize="14" Foreground="#68788D"/>
+          </StackPanel>
+        </Grid>
+
+        <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1"
+                CornerRadius="18" Padding="24">
+          <StackPanel Spacing="18">
+            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="16">
+              <StackPanel Spacing="6">
+                <TextBlock Text="Browser build" FontSize="14" FontWeight="SemiBold"
+                           Foreground="#34445A"/>
+                <ComboBox x:Name="FlavorSelector" MinWidth="250"/>
+              </StackPanel>
+              <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="6">
+                <TextBlock Text="Platform" FontSize="14" FontWeight="SemiBold"
+                           Foreground="#34445A" HorizontalAlignment="Right"/>
+                <TextBlock x:Name="PlatformText" FontSize="14" Foreground="#68788D"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+              </StackPanel>
+              <TextBlock x:Name="AvailabilityNote" Grid.Row="1" Grid.ColumnSpan="2"
+                         TextWrapping="Wrap" FontSize="12" Foreground="#8A5A18"
+                         IsVisible="False" Margin="0,6,0,0"/>
+            </Grid>
+
+            <Border Background="#F6F8FC" CornerRadius="14" Padding="18">
+              <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="20" RowSpacing="16">
+                <StackPanel Spacing="5">
+                  <TextBlock Text="Installed version" FontSize="12" Foreground="#718096"/>
+                  <TextBlock x:Name="InstalledVersionText" Text="Not installed" FontSize="19"
+                             FontWeight="SemiBold" Foreground="#24364B"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="5">
+                  <TextBlock Text="Latest version" FontSize="12" Foreground="#718096"/>
+                  <TextBlock x:Name="LatestVersionText" Text="Not checked" FontSize="19"
+                             FontWeight="SemiBold" Foreground="#24364B"/>
+                </StackPanel>
+                <StackPanel Grid.Row="1" Spacing="5">
+                  <TextBlock Text="Release date" FontSize="12" Foreground="#718096"/>
+                  <TextBlock x:Name="ReleaseDateText" Text="—" FontSize="13" Foreground="#34445A"/>
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
+                  <TextBlock Text="Update source" FontSize="12" Foreground="#718096"/>
+                  <TextBlock x:Name="SourceText" Text="Not checked yet" FontSize="13"
+                             TextWrapping="Wrap" Foreground="#34445A"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+
+            <StackPanel Spacing="9">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock x:Name="StatusText" Text="Ready when you are."
+                           FontSize="14" Foreground="#34445A" TextWrapping="Wrap"/>
+                <TextBlock x:Name="ProgressText" Grid.Column="1" Text=""
+                           FontSize="12" Foreground="#68788D" Margin="12,0,0,0"/>
+              </Grid>
+              <ProgressBar x:Name="UpdateProgress" Minimum="0" Maximum="100"
+                           Value="0" Height="7" IsIndeterminate="False"/>
+              <TextBlock x:Name="LastCheckedText" Text="Last checked: never"
+                         FontSize="12" Foreground="#8A96A7"/>
+            </StackPanel>
+
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+              <Button x:Name="InstallButton" Content="Install update" Classes="accent"
+                      IsEnabled="False" HorizontalAlignment="Stretch" MinHeight="42"/>
+              <Button x:Name="CheckNowButton" Grid.Column="1" Content="Check now"
+                      MinHeight="42" MinWidth="120"/>
+              <Button x:Name="OpenBuildPageButton" Grid.Column="2" Content="Release page"
+                      MinHeight="42" MinWidth="120"/>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1"
+                CornerRadius="18" Padding="24">
+          <StackPanel Spacing="14">
+            <TextBlock Text="Update behavior" FontSize="18" FontWeight="SemiBold"
+                       Foreground="#24364B"/>
+            <CheckBox x:Name="AutoUpdateCheckBox" Content="Install updates automatically when available"/>
+            <CheckBox x:Name="DeferWhileRunningCheckBox"
+                      Content="Wait until the selected browser is closed before installing"/>
+            <CheckBox x:Name="StartWithSystemCheckBox" Content="Launch Chromium Build Updater at sign-in"/>
+            <CheckBox x:Name="MinimizeToTrayCheckBox" Content="Minimize to the system tray when closed"
+                      IsVisible="False"/>
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+              <TextBlock Text="Check every" VerticalAlignment="Center" FontSize="13"
+                         Foreground="#526277"/>
+              <ComboBox x:Name="IntervalSelector" Grid.Column="1" HorizontalAlignment="Left"
+                        MinWidth="120">
+                <ComboBoxItem Content="1 hour"/>
+                <ComboBoxItem Content="3 hours"/>
+                <ComboBoxItem Content="6 hours"/>
+                <ComboBoxItem Content="12 hours"/>
+                <ComboBoxItem Content="24 hours"/>
+              </ComboBox>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <Border Background="#EAF0F8" CornerRadius="16" Padding="22">
+          <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="8">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Support the project" FontSize="16" FontWeight="SemiBold"
+                         Foreground="#24364B"/>
+              <TextBlock Text="Optional. The app is free to use; donations never unlock features."
+                         FontSize="12" Foreground="#68788D" TextWrapping="Wrap"/>
+            </StackPanel>
+            <Button x:Name="PayPalButton" Grid.Column="1" Content="PayPal"
+                    VerticalAlignment="Center"/>
+            <TextBlock Grid.Row="1" Text="Ethereum" FontSize="12" Foreground="#68788D"/>
+            <TextBox x:Name="EthereumAddressText" Grid.Row="1" Grid.Column="1"
+                     IsReadOnly="True" Text="0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791"
+                     MinWidth="320" FontSize="12"/>
+            <TextBlock Grid.Row="2" Text="Bitcoin" FontSize="12" Foreground="#68788D"/>
+            <TextBox x:Name="BitcoinAddressText" Grid.Row="2" Grid.Column="1"
+                     IsReadOnly="True" Text="bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr"
+                     MinWidth="320" FontSize="12"/>
+          </Grid>
+        </Border>
+
+        <TextBlock Text="Browser builds come from their upstream release projects. Every automatic install requires a valid SHA-256 checksum."
+                   FontSize="11" Foreground="#8A96A7" TextWrapping="Wrap"
+                   HorizontalAlignment="Center" Margin="12,0,12,10"/>
+      </StackPanel>
+    </Grid>
+  </ScrollViewer>
+</Window>

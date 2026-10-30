@@ -1,4 +1,4 @@
-name: Build and publish release
+name: Build, test, and publish
 
 on:
   push:
@@ -15,33 +15,79 @@ permissions:
 
 jobs:
   test:
-    runs-on: windows-latest
+    name: Tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - run: dotnet test HibbikiUpdater.sln --configuration Release
+      - run: dotnet test ChromiumBuildUpdater.sln --configuration Release
+      - run: dotnet build src/ChromiumBuildUpdater/ChromiumBuildUpdater.csproj --configuration Release
 
-  release:
+  publish:
+    name: Publish (${{ matrix.rid }})
     if: startsWith(github.ref, 'refs/tags/v')
     needs: test
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            archive: exe
+          - os: ubuntu-latest
+            rid: linux-x64
+            archive: tar.gz
+          - os: ubuntu-latest
+            rid: linux-arm64
+            archive: tar.gz
+          - os: macos-latest
+            rid: osx-arm64
+            archive: tar.gz
+          - os: macos-latest
+            rid: osx-x64
+            archive: tar.gz
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Publish self-contained single-file app
+        run: dotnet publish src/ChromiumBuildUpdater/ChromiumBuildUpdater.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output publish
+      - name: Package Windows executable
+        if: matrix.archive == 'exe'
+        shell: pwsh
+        run: Copy-Item publish\ChromiumBuildUpdater.exe ChromiumBuildUpdater-${{ github.ref_name }}-${{ matrix.rid }}.exe
+      - name: Package Unix executable
+        if: matrix.archive == 'tar.gz'
+        run: tar -czf ChromiumBuildUpdater-${{ github.ref_name }}-${{ matrix.rid }}.tar.gz -C publish ChromiumBuildUpdater
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.rid }}
+          path: ChromiumBuildUpdater-${{ github.ref_name }}-${{ matrix.rid }}.${{ matrix.archive }}
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: publish
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/download-artifact@v4
         with:
-          dotnet-version: 10.0.x
-      - name: Publish self-contained single-file Windows app
-        run: dotnet publish src/HibbikiUpdater/HibbikiUpdater.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --output publish
-      - name: Prepare executable release asset
-        shell: pwsh
-        run: Copy-Item publish\HibbikiUpdater.exe HibbikiUpdater-${{ github.ref_name }}-win-x64.exe
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
         with:
-          name: HibbikiUpdater ${{ github.ref_name }}
+          name: Chromium Build Updater ${{ github.ref_name }}
           generate_release_notes: true
-          files: HibbikiUpdater-${{ github.ref_name }}-win-x64.exe
+          files: release-assets/*
