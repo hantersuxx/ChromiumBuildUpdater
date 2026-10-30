@@ -1,16 +1,14 @@
 # HibbikiUpdater
 
-### Keep Hibbiki Chromium, Ungoogled Chromium, and Thorium up to date from the Windows system tray.
+### A Windows tray app that checks for and installs updates to Hibbiki Chromium, Ungoogled Chromium, and Thorium.
 
 [![Build and publish release](https://github.com/hantersuxx/HibbikiUpdater/actions/workflows/release.yml/badge.svg)](https://github.com/hantersuxx/HibbikiUpdater/actions/workflows/release.yml)
 [![Latest release](https://img.shields.io/github/v/release/hantersuxx/HibbikiUpdater?display_name=tag)](https://github.com/hantersuxx/HibbikiUpdater/releases/latest)
 ![Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 
-**HibbikiUpdater** is a lightweight Windows tray app for keeping **Hibbiki Chromium**,
-**Ungoogled Chromium**, and **Thorium** current. It checks for new builds, verifies
-downloads with SHA-256, and can install updates automatically or wait until the
-browser is closed.
+**HibbikiUpdater** checks for new browser builds, verifies installers with SHA-256,
+and can install updates automatically or wait until the browser is closed.
 
 <p align="center">
   <a href="https://github.com/hantersuxx/HibbikiUpdater/releases/latest"><strong>Download the latest Windows app</strong></a>
