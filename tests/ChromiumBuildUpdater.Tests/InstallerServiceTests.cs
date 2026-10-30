@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Cryptography;
 using ChromiumBuildUpdater.Core.Models;
 using ChromiumBuildUpdater.Core.Services;
 
@@ -115,18 +116,66 @@ public class InstallerServiceTests
     [Fact]
     public async Task DownloadVerifyAndInstallAsync_StopsBeforeInstallWhenChecksumDoesNotMatch()
     {
+        var installer = new RecordingInstallStrategy();
         using var httpClient = new HttpClient(new StubHttpMessageHandler(
             _ => new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("this is not the expected installer")
             }));
-        var service = new InstallerService(httpClient, HostPlatform.Windows);
+        var service = new InstallerService(httpClient, HostPlatform.Windows, installer);
         ReleaseArtifact artifact = CreateArtifact();
 
         InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.DownloadVerifyAndInstallAsync(artifact, new EmptyProgress()));
 
         Assert.Contains("checksum mismatch", error.Message);
+        Assert.Equal(0, installer.InvocationCount);
+    }
+
+    [Fact]
+    public async Task DownloadVerifyAndInstallAsync_PassesVerifiedBytesToPlatformInstallerAndCleansUp()
+    {
+        byte[] payload = "verified browser installer"u8.ToArray();
+        string checksum = Convert.ToHexString(SHA256.HashData(payload));
+        var installer = new RecordingInstallStrategy();
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(payload)
+            }));
+        var service = new InstallerService(httpClient, HostPlatform.Windows, installer);
+        ReleaseArtifact artifact = CreateArtifact(checksum: checksum);
+
+        await service.DownloadVerifyAndInstallAsync(artifact, new EmptyProgress());
+
+        Assert.Equal(1, installer.InvocationCount);
+        Assert.Equal(payload, installer.InstalledBytes);
+        Assert.Equal(HostPlatform.Windows, installer.Platform);
+        Assert.NotNull(installer.ArtifactPath);
+        Assert.False(File.Exists(installer.ArtifactPath));
+    }
+
+    [Fact]
+    public async Task DownloadVerifyAndInstallAsync_RejectsHttpsRedirectToHttp()
+    {
+        var installer = new RecordingInstallStrategy();
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                RequestMessage = new HttpRequestMessage(
+                    HttpMethod.Get,
+                    "http://insecure.example.test/installer.exe"),
+                Content = new StringContent("installer")
+            }));
+        var service = new InstallerService(httpClient, HostPlatform.Windows, installer);
+
+        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.DownloadVerifyAndInstallAsync(
+                CreateArtifact(),
+                new EmptyProgress()));
+
+        Assert.Contains("non-HTTPS", error.Message);
+        Assert.Equal(0, installer.InvocationCount);
     }
 
     private static ReleaseArtifact CreateArtifact(
@@ -155,6 +204,29 @@ public class InstallerServiceTests
     {
         public void Report((int Percent, string StatusText) value)
         {
+        }
+    }
+
+    private sealed class RecordingInstallStrategy : IArtifactInstallStrategy
+    {
+        public int InvocationCount { get; private set; }
+        public byte[]? InstalledBytes { get; private set; }
+        public string? ArtifactPath { get; private set; }
+        public HostPlatform Platform { get; private set; }
+
+        public Task InstallAsync(
+            ReleaseArtifact artifact,
+            string artifactPath,
+            IProgress<(int Percent, string StatusText)> progress,
+            HostPlatform platform,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            InvocationCount++;
+            ArtifactPath = artifactPath;
+            InstalledBytes = File.ReadAllBytes(artifactPath);
+            Platform = platform;
+            return Task.CompletedTask;
         }
     }
 }

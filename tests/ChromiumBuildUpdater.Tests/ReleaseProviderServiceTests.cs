@@ -102,6 +102,46 @@ public class ReleaseProviderServiceTests
     }
 
     [Fact]
+    public async Task FetchLatestReleaseAsync_UsesLatestFeedWhenWindowsFeedHasNoMatchingBuild()
+    {
+        const string latestUrl = "https://chromiumbuilds.org/api/v1/latest.json";
+        const string downloadUrl = "https://downloads.example.test/installer.exe";
+        const string checksum = "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789";
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            if (request.RequestUri?.AbsoluteUri == latestUrl)
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        $$"""[{"name":"hibbiki-chromium","version":"156.0.8078.74","url":"{{downloadUrl}}","sha256":"{{checksum}}"}]""",
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"builds":[]}""", Encoding.UTF8, "application/json")
+            };
+        });
+        using var httpClient = new HttpClient(handler);
+        var service = new ReleaseProviderService(httpClient, HostPlatform.Windows, Architecture.X64, true);
+
+        ReleaseArtifact artifact = await service.FetchLatestReleaseAsync(
+            ChromiumFlavor.Hibbiki,
+            preferChromiumBuildsOrg: true);
+
+        Assert.Equal(downloadUrl, artifact.DownloadUrl);
+        Assert.Equal(checksum, artifact.ExpectedSha256);
+        Assert.Equal("Failover (chromiumbuilds.org/api/v1/latest.json)", artifact.SourceName);
+        Assert.Collection(
+            handler.RequestUris,
+            uri => Assert.Equal("https://chromiumbuilds.org/api/v1/windows.json", uri.AbsoluteUri),
+            uri => Assert.Equal(latestUrl, uri.AbsoluteUri));
+    }
+
+    [Fact]
     public async Task FetchLatestReleaseAsync_IncludesAllFallbackErrorsInFinalException()
     {
         using var httpClient = new HttpClient(new StubHttpMessageHandler(
@@ -170,6 +210,44 @@ public class ReleaseProviderServiceTests
         Assert.Equal(appImageUrl, artifact.DownloadUrl);
         Assert.Equal(checksum, artifact.ExpectedSha256);
         Assert.Contains("beta", artifact.SourceName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData(HostPlatform.Windows, ChromiumFlavor.Hibbiki, Architecture.X64, false, "mini_installer.exe")]
+    [InlineData(HostPlatform.Windows, ChromiumFlavor.UngoogledChromium, Architecture.X64, false, "ungoogled_installer_x64.exe")]
+    [InlineData(HostPlatform.Windows, ChromiumFlavor.Thorium, Architecture.X64, true, "thorium_mini_installer_AVX2.exe")]
+    [InlineData(HostPlatform.Windows, ChromiumFlavor.Thorium, Architecture.X64, false, "thorium_mini_installer_SSE4.exe")]
+    [InlineData(HostPlatform.MacOS, ChromiumFlavor.UngoogledChromium, Architecture.X64, false, "ungoogled_x86_64-macos.dmg")]
+    [InlineData(HostPlatform.MacOS, ChromiumFlavor.UngoogledChromium, Architecture.Arm64, false, "ungoogled_arm64-macos.dmg")]
+    [InlineData(HostPlatform.Linux, ChromiumFlavor.Thorium, Architecture.X64, true, "Thorium_AVX2.AppImage")]
+    [InlineData(HostPlatform.Linux, ChromiumFlavor.Thorium, Architecture.X64, false, "Thorium_SSE4.AppImage")]
+    [InlineData(HostPlatform.Linux, ChromiumFlavor.Thorium, Architecture.Arm64, false, "Thorium_arm64.AppImage")]
+    public async Task FeedContract_SelectsAssetMatchingSupportedPlatformAndArchitecture(
+        HostPlatform platform,
+        ChromiumFlavor flavor,
+        Architecture architecture,
+        bool supportsAvx2,
+        string expectedAsset)
+    {
+        var assets = new[]
+        {
+            ("mini_installer.exe", "https://example.test/mini_installer.exe", "sha256:" + new string('a', 64)),
+            ("ungoogled_installer_x64.exe", "https://example.test/ungoogled_installer_x64.exe", "sha256:" + new string('a', 64)),
+            ("ungoogled_installer_arm64.exe", "https://example.test/ungoogled_installer_arm64.exe", "sha256:" + new string('a', 64)),
+            ("thorium_mini_installer_AVX2.exe", "https://example.test/thorium_mini_installer_AVX2.exe", "sha256:" + new string('a', 64)),
+            ("thorium_mini_installer_SSE4.exe", "https://example.test/thorium_mini_installer_SSE4.exe", "sha256:" + new string('a', 64)),
+            ("ungoogled_x86_64-macos.dmg", "https://example.test/ungoogled_x86_64-macos.dmg", "sha256:" + new string('a', 64)),
+            ("ungoogled_arm64-macos.dmg", "https://example.test/ungoogled_arm64-macos.dmg", "sha256:" + new string('a', 64)),
+            ("Thorium_AVX2.AppImage", "https://example.test/Thorium_AVX2.AppImage", "sha256:" + new string('a', 64)),
+            ("Thorium_SSE4.AppImage", "https://example.test/Thorium_SSE4.AppImage", "sha256:" + new string('a', 64)),
+            ("Thorium_arm64.AppImage", "https://example.test/Thorium_arm64.AppImage", "sha256:" + new string('a', 64))
+        };
+        using var httpClient = new HttpClient(CreateReleaseHandler("156.0.8078.74", assets));
+        var service = new ReleaseProviderService(httpClient, platform, architecture, supportsAvx2);
+
+        ReleaseArtifact artifact = await service.FetchLatestReleaseAsync(flavor);
+
+        Assert.Equal(expectedAsset, artifact.AssetName);
     }
 
     [Fact]

@@ -6,10 +6,37 @@ using ChromiumBuildUpdater.Core.Models;
 
 namespace ChromiumBuildUpdater.Core.Services;
 
+internal interface IArtifactInstallStrategy
+{
+    Task InstallAsync(
+        ReleaseArtifact artifact,
+        string artifactPath,
+        IProgress<(int Percent, string StatusText)> progress,
+        HostPlatform platform,
+        CancellationToken cancellationToken);
+}
+
+internal sealed class NativeArtifactInstallStrategy : IArtifactInstallStrategy
+{
+    public Task InstallAsync(
+        ReleaseArtifact artifact,
+        string artifactPath,
+        IProgress<(int Percent, string StatusText)> progress,
+        HostPlatform platform,
+        CancellationToken cancellationToken) =>
+        InstallerService.InstallArtifactAsync(
+            artifact,
+            artifactPath,
+            progress,
+            platform,
+            cancellationToken);
+}
+
 public class InstallerService
 {
     private readonly HttpClient _downloadHttp;
     private readonly HostPlatform _platform;
+    private readonly IArtifactInstallStrategy _installStrategy;
 
     public InstallerService(HttpClient? downloadHttp = null)
         : this(downloadHttp, PlatformSupport.Current)
@@ -17,8 +44,17 @@ public class InstallerService
     }
 
     internal InstallerService(HttpClient? downloadHttp, HostPlatform platform)
+        : this(downloadHttp, platform, new NativeArtifactInstallStrategy())
+    {
+    }
+
+    internal InstallerService(
+        HttpClient? downloadHttp,
+        HostPlatform platform,
+        IArtifactInstallStrategy installStrategy)
     {
         _platform = platform;
+        _installStrategy = installStrategy ?? throw new ArgumentNullException(nameof(installStrategy));
         _downloadHttp = downloadHttp ?? new HttpClient
         {
             Timeout = TimeSpan.FromMinutes(15),
@@ -97,7 +133,12 @@ public class InstallerService
                     $"SHA-256 checksum mismatch. Expected {expectedSha256}, got {actualSha256}. Installation aborted.");
             }
 
-            await InstallArtifactAsync(artifact, temporaryArtifactPath, progress, _platform, ct);
+            await _installStrategy.InstallAsync(
+                artifact,
+                temporaryArtifactPath,
+                progress,
+                _platform,
+                ct);
             progress.Report((100, $"Successfully updated {artifact.Flavor} to {artifact.CleanVersion}."));
         }
         finally
@@ -148,7 +189,7 @@ public class InstallerService
         return uri;
     }
 
-    private static async Task InstallArtifactAsync(
+    internal static async Task InstallArtifactAsync(
         ReleaseArtifact artifact,
         string artifactPath,
         IProgress<(int Percent, string StatusText)> progress,

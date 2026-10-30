@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -16,7 +15,7 @@ namespace ChromiumBuildUpdater.Core.Services;
 /// Selects verified release assets for the current OS. Windows uses GitHub with
 /// chromiumbuilds.org failover; macOS and Linux use their matching GitHub feeds.
 /// </summary>
-public class ReleaseProviderService
+public class ReleaseProviderService : IReleaseProvider
 {
     private const string HibbikiGitHubUrl = "https://api.github.com/repos/Hibbiki/chromium-win64/releases/latest";
     private const string UngoogledGitHubUrl = "https://api.github.com/repos/ungoogled-software/ungoogled-chromium-windows/releases/latest";
@@ -290,7 +289,11 @@ public class ReleaseProviderService
                 await using var stream = await response.Content.ReadAsStreamAsync(ct);
                 using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
 
-                var matched = TryParseChromiumBuildsDocument(doc.RootElement, flavor, searchKeyword);
+                var matched = ChromiumBuildsOrgFeedParser.TryParse(
+                    doc.RootElement,
+                    flavor,
+                    searchKeyword,
+                    endpoint);
                 if (matched != null)
                     return matched;
 
@@ -311,131 +314,6 @@ public class ReleaseProviderService
             : string.Join(" | ", errors);
         throw new InvalidOperationException(
             $"Could not locate {flavor} x64 installer in chromiumbuilds.org JSON feeds. {details}");
-    }
-
-    private static ReleaseArtifact? TryParseChromiumBuildsDocument(
-        JsonElement root,
-        ChromiumFlavor flavor,
-        string keyword)
-    {
-        IEnumerable<JsonElement> rows = EnumerateBuildCandidates(root);
-
-        foreach (var item in rows)
-        {
-            string idOrName = GetStringProp(item, "id", "name", "slug", "title", "build");
-            if (!idOrName.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            // Check architecture if specified on the row
-            if (item.TryGetProperty("arch", out var archProp))
-            {
-                string archText = archProp.ToString();
-                if (!archText.Contains("x64", StringComparison.OrdinalIgnoreCase) &&
-                    !archText.Contains("64", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-            }
-
-            string rawVersion = GetStringProp(item, "version", "latest_version", "tag");
-            string dateStr = GetStringProp(item, "updated", "published", "published_at", "date", "built");
-            DateTime publishedUtc = DateTimeOffset.TryParse(
-                dateStr,
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.AssumeUniversal,
-                out DateTimeOffset parsedDate)
-                ? parsedDate.UtcDateTime
-                : DateTime.UtcNow;
-
-            // Case A: Flat row in latest.json ("url", "download_url", "installer_url")
-            string directUrl = GetStringProp(item, "url", "download_url", "installer_url");
-            string directSha = GetStringProp(item, "sha256", "checksum", "hash");
-
-            if (!string.IsNullOrWhiteSpace(directUrl) && directUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-            {
-                string cleanVer = VersionService.NormalizeReleaseVersion(rawVersion);
-                return new ReleaseArtifact(
-                    Flavor: flavor,
-                    CleanVersion: cleanVer,
-                    FullTag: rawVersion,
-                    PublishedAtUtc: publishedUtc,
-                    DownloadUrl: directUrl,
-                    ExpectedSha256: ChecksumService.NormalizeSha256(directSha),
-                    SourceName: "Failover (chromiumbuilds.org/api/v1/latest.json)"
-                );
-            }
-
-            // Case B: Nested downloads array in windows.json
-            if (item.TryGetProperty("downloads", out var downloads) && downloads.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var dl in downloads.EnumerateArray())
-                {
-                    string dlUrl = GetStringProp(dl, "url", "download_url", "href");
-                    if (string.IsNullOrWhiteSpace(dlUrl) || !dlUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    if (dlUrl.Contains("arm64", StringComparison.OrdinalIgnoreCase) ||
-                        dlUrl.Contains("x86.", StringComparison.OrdinalIgnoreCase) ||
-                        dlUrl.Contains("32bit", StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    string dlSha = GetStringProp(dl, "sha256", "checksum", "digest");
-                    string cleanVer = VersionService.NormalizeReleaseVersion(rawVersion);
-
-                    return new ReleaseArtifact(
-                        Flavor: flavor,
-                        CleanVersion: cleanVer,
-                        FullTag: rawVersion,
-                        PublishedAtUtc: publishedUtc,
-                        DownloadUrl: dlUrl,
-                        ExpectedSha256: ChecksumService.NormalizeSha256(dlSha),
-                        SourceName: "Failover (chromiumbuilds.org/api/v1/windows.json)"
-                    );
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static IEnumerable<JsonElement> EnumerateBuildCandidates(JsonElement root)
-    {
-        if (root.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var el in root.EnumerateArray())
-                yield return el;
-        }
-        else if (root.ValueKind == JsonValueKind.Object)
-        {
-            if (root.TryGetProperty("builds", out var buildsArr) && buildsArr.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var el in buildsArr.EnumerateArray())
-                    yield return el;
-            }
-            else
-            {
-                foreach (var prop in root.EnumerateObject())
-                {
-                    if (prop.Value.ValueKind == JsonValueKind.Object)
-                        yield return prop.Value;
-                }
-            }
-        }
-    }
-
-    private static string GetStringProp(JsonElement element, params string[] candidateNames)
-    {
-        if (element.ValueKind != JsonValueKind.Object) return string.Empty;
-        foreach (string name in candidateNames)
-        {
-            if (element.TryGetProperty(name, out var val) && val.ValueKind == JsonValueKind.String)
-            {
-                return val.GetString() ?? string.Empty;
-            }
-        }
-        return string.Empty;
     }
 
     private static bool IsRecoverableFeedFailure(Exception exception) =>

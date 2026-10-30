@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private readonly PlatformStartupService _startupService = new();
     private readonly LocalChromiumService _localChromiumService = new();
     private readonly ReleaseProviderService _releaseProviderService = new();
+    private readonly UpdateCheckService _updateCheckService;
     private readonly InstallerService _installerService = new();
     private readonly DispatcherTimer _schedulerTimer = new();
     private readonly DispatcherTimer _deferredInstallTimer = new();
@@ -37,6 +38,10 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _configService = new ConfigService();
+        _updateCheckService = new UpdateCheckService(
+            _releaseProviderService,
+            _localChromiumService,
+            _configService);
         PlatformText.Text = GetPlatformDescription();
         PopulateFlavorSelector();
         BindConfigToUi();
@@ -226,167 +231,6 @@ public partial class MainWindow : Window
         PayPalButton.Click += (_, _) => OpenSupportPage();
     }
 
-    private async Task RunUpdateCycleAsync(bool allowAutomaticInstall)
-    {
-        if (_isBusy || FlavorSelector.SelectedItem is not FlavorChoice choice)
-            return;
-
-        _isBusy = true;
-        SetControlsEnabled(false);
-        UpdateProgress.Value = 0;
-        ProgressText.Text = "";
-        StatusText.Text = $"Checking for {choice.DisplayName} updates...";
-
-        try
-        {
-            ReleaseArtifact artifact = await _releaseProviderService.FetchLatestReleaseAsync(
-                choice.Flavor,
-                _configService.Current.PreferChromiumBuildsOrgApi,
-                _lifetime.Token);
-            _latestArtifact = artifact;
-            LatestVersionText.Text = artifact.CleanVersion;
-            ReleaseDateText.Text = artifact.PublishedAtUtc.ToLocalTime().ToString("d");
-            SourceText.Text = artifact.SourceName;
-            _configService.Current.LastKnownRemoteVersion = artifact.CleanVersion;
-            _configService.Current.LastKnownRemoteDate = ReleaseDateText.Text;
-            _configService.Current.LastKnownSource = artifact.SourceName;
-            _configService.Current.LastCheckTime = DateTime.Now.ToString("g");
-            SaveConfig();
-            UpdateLastCheckedText();
-
-            string installedVersion = _localChromiumService.GetInstalledVersion(choice.Flavor);
-            InstalledVersionText.Text = installedVersion;
-            bool updateAvailable = _localChromiumService.IsRemoteNewer(installedVersion, artifact.CleanVersion);
-            InstallButton.IsEnabled = updateAvailable;
-            InstallButton.Content = installedVersion == "Not Installed" ? "Install build" : "Install update";
-
-            if (!updateAvailable)
-            {
-                StatusText.Text = "You are up to date.";
-                return;
-            }
-
-            StatusText.Text = $"Version {artifact.CleanVersion} is available.";
-            if (allowAutomaticInstall && _configService.Current.AutoUpdate)
-                await InstallOrDeferAsync(artifact);
-        }
-        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
-        {
-        }
-        catch (OperationCanceledException ex)
-        {
-            StatusText.Text = $"Update check timed out: {ex.Message}";
-            InstallButton.IsEnabled = false;
-        }
-        catch (Exception ex) when (
-            ex is HttpRequestException or InvalidOperationException or PlatformNotSupportedException or
-            IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or
-            System.Text.Json.JsonException)
-        {
-            StatusText.Text = $"Update check failed: {ex.Message}";
-            InstallButton.IsEnabled = false;
-        }
-        finally
-        {
-            _isBusy = false;
-            SetControlsEnabled(true);
-            if (_latestArtifact is not null)
-                InstallButton.IsEnabled = _localChromiumService.IsRemoteNewer(
-                    _localChromiumService.GetInstalledVersion(_configService.Current.SelectedFlavor),
-                    _latestArtifact.CleanVersion);
-        }
-    }
-
-    private async Task InstallOrDeferAsync(ReleaseArtifact artifact)
-    {
-        if (_configService.Current.DeferIfChromiumRunning &&
-            _localChromiumService.IsBrowserRunning(artifact.Flavor))
-        {
-            _pendingDeferredArtifact = artifact;
-            _deferredInstallTimer.Start();
-            StatusText.Text = "The browser is open. The update will install after you close it.";
-            return;
-        }
-
-        await InstallArtifactAsync(artifact);
-    }
-
-    private async Task TryInstallDeferredUpdateAsync()
-    {
-        if (_isBusy || _pendingDeferredArtifact is not { } artifact)
-            return;
-
-        if (_localChromiumService.IsBrowserRunning(artifact.Flavor))
-            return;
-
-        _pendingDeferredArtifact = null;
-        _deferredInstallTimer.Stop();
-        await InstallArtifactAsync(artifact);
-    }
-
-    private async Task InstallArtifactAsync(ReleaseArtifact artifact)
-    {
-        _isBusy = true;
-        SetControlsEnabled(false);
-        try
-        {
-            var progress = new Progress<(int Percent, string StatusText)>(update =>
-            {
-                UpdateProgress.Value = update.Percent;
-                ProgressText.Text = update.Percent > 0 ? $"{update.Percent}%" : "";
-                StatusText.Text = update.StatusText;
-            });
-            await _installerService.DownloadVerifyAndInstallAsync(artifact, progress, _lifetime.Token);
-            UpdateProgress.Value = 100;
-            InstalledVersionText.Text = _localChromiumService.GetInstalledVersion(artifact.Flavor);
-            InstallButton.IsEnabled = false;
-            _pendingDeferredArtifact = null;
-        }
-        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
-        {
-        }
-        catch (OperationCanceledException ex)
-        {
-            StatusText.Text = $"The update download timed out: {ex.Message}";
-        }
-        catch (Exception ex) when (
-            ex is InvalidOperationException or PlatformNotSupportedException or IOException or
-            UnauthorizedAccessException or System.ComponentModel.Win32Exception or AggregateException)
-        {
-            StatusText.Text = $"Installation failed: {ex.Message}";
-        }
-        finally
-        {
-            _isBusy = false;
-            SetControlsEnabled(true);
-        }
-    }
-
-    private void SaveConfig()
-    {
-        _configService.Save();
-        if (_configService.LastError is not null)
-            StatusText.Text = _configService.LastError;
-    }
-
-    private void ResetScheduler()
-    {
-        _schedulerTimer.Stop();
-        _schedulerTimer.Interval = TimeSpan.FromHours(Math.Clamp(_configService.Current.CheckIntervalHours, 1, 72));
-        _schedulerTimer.Start();
-    }
-
-    private void SetControlsEnabled(bool enabled)
-    {
-        FlavorSelector.IsEnabled = enabled && FlavorSelector.Items.Count > 0;
-        CheckNowButton.IsEnabled = enabled;
-        OpenBuildPageButton.IsEnabled = enabled && _latestArtifact is not null;
-        InstallButton.IsEnabled = enabled && _latestArtifact is not null &&
-                                  _localChromiumService.IsRemoteNewer(
-                                      _localChromiumService.GetInstalledVersion(_configService.Current.SelectedFlavor),
-                                      _latestArtifact.CleanVersion);
-    }
-
     private void UpdateInstalledVersion() =>
         InstalledVersionText.Text = _localChromiumService.GetInstalledVersion(_configService.Current.SelectedFlavor);
 
@@ -405,6 +249,11 @@ public partial class MainWindow : Window
         string value = _configService.Current.LastCheckTime;
         LastCheckedText.Text = value == "Never" ? "Last checked: never" : $"Last checked: {value}";
     }
+
+    private static string AppendSettingsWarning(string status, string? settingsError) =>
+        string.IsNullOrWhiteSpace(settingsError)
+            ? status
+            : $"{status} Settings warning: {settingsError}";
 
     private void AddIntervalIfMissing(int hours)
     {

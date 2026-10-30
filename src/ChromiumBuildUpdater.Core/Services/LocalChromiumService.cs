@@ -5,7 +5,7 @@ using ChromiumBuildUpdater.Core.Models;
 
 namespace ChromiumBuildUpdater.Core.Services;
 
-public class LocalChromiumService
+public class LocalChromiumService : IInstalledBuildService
 {
     public string? FindExecutablePath(ChromiumFlavor flavor)
     {
