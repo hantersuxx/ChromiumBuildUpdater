@@ -19,7 +19,9 @@ partial class MainForm
     private ProgressBar _progressBar = null!;
     private Button _btnManualUpdate = null!;
     private Button _btnCheckNow = null!;
-    private LinkLabel _lnkSupport = null!;
+    private LinkLabel _lnkPayPal = null!;
+    private LinkLabel _lnkEthereum = null!;
+    private LinkLabel _lnkBitcoin = null!;
     private CheckBox _chkAutoUpdate = null!;
     private CheckBox _chkNotifications = null!;
     private CheckBox _chkMinimizeOnClose = null!;
@@ -40,8 +42,8 @@ partial class MainForm
     private void InitializeComponent()
     {
         Text = "Chromium Tray Updater";
-        ClientSize = new Size(760, 760);
-        MinimumSize = new Size(700, 700);
+        ClientSize = new Size(760, 790);
+        MinimumSize = new Size(700, 730);
         FormBorderStyle = FormBorderStyle.Sizable;
         MaximizeBox = true;
         StartPosition = FormStartPosition.CenterScreen;
@@ -54,15 +56,16 @@ partial class MainForm
             Dock = DockStyle.Fill,
             Padding = new Padding(16),
             ColumnCount = 1,
-            RowCount = 6,
+            RowCount = 7,
             RowStyles =
             {
-                new RowStyle(SizeType.Percent, 10),
-                new RowStyle(SizeType.Percent, 30),
-                new RowStyle(SizeType.Percent, 38),
+                new RowStyle(SizeType.Percent, 9),
+                new RowStyle(SizeType.Percent, 26),
+                new RowStyle(SizeType.Percent, 34),
                 new RowStyle(SizeType.Percent, 8),
-                new RowStyle(SizeType.Percent, 5),
-                new RowStyle(SizeType.Percent, 9)
+                new RowStyle(SizeType.Percent, 4),
+                new RowStyle(SizeType.Percent, 8),
+                new RowStyle(SizeType.Percent, 11)
             }
         };
 
@@ -192,6 +195,24 @@ partial class MainForm
         settingsLayout.SetColumnSpan(intervalPanel, 2);
         grpSettings.Controls.Add(settingsLayout);
 
+        var supportPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(8, 8, 4, 0)
+        };
+        supportPanel.Controls.Add(new Label
+        {
+            Text = "Enjoying the app? Support development (optional):",
+            AutoSize = true,
+            Margin = new Padding(0, 5, 10, 0)
+        });
+        _lnkPayPal = new LinkLabel { Text = "PayPal", AutoSize = true, Margin = new Padding(0, 5, 14, 0) };
+        _lnkEthereum = new LinkLabel { Text = "Copy ETH address", AutoSize = true, Margin = new Padding(0, 5, 14, 0) };
+        _lnkBitcoin = new LinkLabel { Text = "Copy BTC address", AutoSize = true, Margin = new Padding(0, 5, 0, 0) };
+        supportPanel.Controls.AddRange(new Control[] { _lnkPayPal, _lnkEthereum, _lnkBitcoin });
+
         _lblStatus = new Label
         {
             Text = "Ready.",
@@ -237,19 +258,10 @@ partial class MainForm
         btnPanel.Controls.Add(_btnManualUpdate);
         btnPanel.Controls.Add(_btnCheckNow);
 
-        _lnkSupport = new LinkLabel
-        {
-            Text = "Support this project",
-            AutoSize = true,
-            Anchor = AnchorStyles.Left,
-            Margin = new Padding(0, 9, 12, 0),
-            Visible = false
-        };
-        btnPanel.Controls.Add(_lnkSupport);
-
         mainLayout.Controls.Add(grpFlavor);
         mainLayout.Controls.Add(grpInfo);
         mainLayout.Controls.Add(grpSettings);
+        mainLayout.Controls.Add(supportPanel);
         mainLayout.Controls.Add(_lblStatus);
         mainLayout.Controls.Add(_progressBar);
         mainLayout.Controls.Add(btnPanel);

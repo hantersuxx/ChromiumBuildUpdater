@@ -64,14 +64,26 @@ project version, create a new tag, and push that tag.
 
 ## Optional project support
 
-The app's **Support this project** link is hidden by default. To show it, add a
-`SupportUrl` property containing your HTTPS donation or sponsorship page to
-`%LocalAppData%\HibbikiUpdater\config.json`. For example:
+The app includes a small, optional support row with PayPal and copy-to-clipboard
+links for Ethereum and Bitcoin. Supporting is entirely voluntary and has no effect
+on app features. The defaults can be customized in
+`%LocalAppData%\HibbikiUpdater\config.json`:
 
 ```json
 {
-  "SupportUrl": "https://github.com/sponsors/YOUR-USERNAME"
+  "SupportUrl": "https://paypal.me/AliaksandrJoya",
+  "EthereumAddress": "0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791",
+  "BitcoinAddress": "bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr"
 }
 ```
 
-The link is optional and does not unlock features or interrupt app use.
+**Other easy options:** GitHub Sponsors adds a native sponsor button to the repo
+(if available for your account); Ko-fi and Buy Me a Coffee provide hosted tip pages;
+Open Collective is useful if you want transparent community finances. A hosted
+page can consolidate PayPal and card payments, while keeping the crypto addresses
+as optional alternatives.
+
+| PayPal | Ethereum | Bitcoin |
+|---|---|---|
+| [paypal.me/AliaksandrJoya](https://paypal.me/AliaksandrJoya) | `0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791` | `bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr` |
+| — | ![Ethereum donation QR](docs/donate/ethereum-qr.png) | ![Bitcoin donation QR](docs/donate/bitcoin-qr.png) |

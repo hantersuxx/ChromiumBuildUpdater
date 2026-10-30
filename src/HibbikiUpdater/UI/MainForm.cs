@@ -41,7 +41,9 @@ public partial class MainForm : Form
 
         InitializeComponent();
         BindConfigToUi();
-        _lnkSupport.Visible = TryGetSupportUri(_configService.Current.SupportUrl, out _);
+        _lnkPayPal.Enabled = TryGetSupportUri(_configService.Current.SupportUrl, out _);
+        _lnkEthereum.Enabled = !string.IsNullOrWhiteSpace(_configService.Current.EthereumAddress);
+        _lnkBitcoin.Enabled = !string.IsNullOrWhiteSpace(_configService.Current.BitcoinAddress);
         SetButtonsEnabled(true);
         if (_configService.LastError is not null)
             _lblStatus.Text = _configService.LastError;
@@ -161,7 +163,13 @@ public partial class MainForm : Form
 
         _btnManualUpdate.Click += async (_, _) => await RunUpdateCycleAsync(forceInstall: true);
         _btnCheckNow.Click += async (_, _) => await RunUpdateCycleAsync(forceInstall: false, manualCheckOnly: true);
-        _lnkSupport.LinkClicked += (_, _) => OpenSupportPage();
+        _lnkPayPal.LinkClicked += (_, _) => OpenSupportPage();
+        _lnkEthereum.LinkClicked += (_, _) => CopySupportAddress(
+            _configService.Current.EthereumAddress,
+            "Ethereum address");
+        _lnkBitcoin.LinkClicked += (_, _) => CopySupportAddress(
+            _configService.Current.BitcoinAddress,
+            "Bitcoin address");
     }
 
     private static bool TryGetSupportUri(string? supportUrl, out Uri? uri) =>
@@ -181,6 +189,22 @@ public partial class MainForm : Form
         catch (System.ComponentModel.Win32Exception ex)
         {
             _lblStatus.Text = $"Could not open support page: {ex.Message}";
+        }
+    }
+
+    private void CopySupportAddress(string? address, string currency)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+            return;
+
+        try
+        {
+            Clipboard.SetText(address);
+            _lblStatus.Text = $"{currency} copied to clipboard.";
+        }
+        catch (System.Runtime.InteropServices.ExternalException ex)
+        {
+            _lblStatus.Text = $"Could not copy {currency}: {ex.Message}";
         }
     }
 
