@@ -458,6 +458,9 @@ public partial class MainWindow : Window
         Activate();
     }
 
+    public void ActivateFromSecondaryInstance() =>
+        Dispatcher.UIThread.Post(RestoreFromTray);
+
     private void ExitApplication()
     {
         _allowClose = true;

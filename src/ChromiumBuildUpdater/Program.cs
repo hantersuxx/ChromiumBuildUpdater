@@ -30,6 +30,12 @@ class Program
             applicationArgs = [];
         }
 
+        using SingleInstanceService? singleInstance =
+            SingleInstanceService.TryCreate("ChromiumBuildUpdater");
+        if (singleInstance is null)
+            return;
+
+        App.SingleInstance = singleInstance;
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(applicationArgs);
     }
 

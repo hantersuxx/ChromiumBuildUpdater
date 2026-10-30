@@ -30,6 +30,7 @@ than silently substituting a different browser.
 ## What it does
 
 - Check manually or on a schedule.
+- Keep a single app instance per user; a second launch activates the existing window.
 - Optionally install new versions automatically.
 - Defer an install while the selected browser is running.
 - Verify the exact selected asset with SHA-256 before installation.
