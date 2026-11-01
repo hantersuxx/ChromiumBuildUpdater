@@ -3,6 +3,7 @@
     ".": {
       "release-type": "simple",
       "package-name": "ChromiumBuildUpdater",
+      "include-component-in-tag": false,
       "version-file": "version.txt",
       "changelog-sections": [
         {
