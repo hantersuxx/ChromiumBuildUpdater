@@ -12,6 +12,14 @@ public partial class App : Application
     public static string? StartupUpdateError { get; set; }
     public static SingleInstanceService? SingleInstance { get; set; }
 
+    public static ThemeVariant GetThemeVariant(AppTheme theme) =>
+        theme switch
+        {
+            AppTheme.Light => ThemeVariant.Light,
+            AppTheme.Dark => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
+        };
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -22,12 +30,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var configService = new ConfigService();
-            RequestedThemeVariant = configService.Current.Theme switch
-            {
-                AppTheme.Light => ThemeVariant.Light,
-                AppTheme.Dark => ThemeVariant.Dark,
-                _ => ThemeVariant.Default
-            };
+            RequestedThemeVariant = GetThemeVariant(configService.Current.Theme);
             var mainWindow = new MainWindow(configService);
             SingleInstance!.ActivationRequested += mainWindow.ActivateFromSecondaryInstance;
             desktop.MainWindow = mainWindow;

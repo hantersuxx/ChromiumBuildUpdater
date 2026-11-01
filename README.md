@@ -82,18 +82,12 @@ and `osx-arm64`.
 ## Releases and checks
 
 Pull requests and pushes to `main` run the test suite on Windows, macOS, and Linux and build the
-desktop app. Pushing a `v*` tag publishes self-contained single-file packages for all five
-supported runtime identifiers, along with a SHA-256 manifest used by the in-app updater, but
-only after every test/build job succeeds. A normal commit to `main` runs CI; it does not create
-a GitHub Release. After the `main` workflow succeeds, publish a version by pushing its tag:
-
-```powershell
-git tag v3.1.0
-git push origin v3.1.0
-```
-
-Use the version in the project files for new tags. The tag workflow runs the tests again before
-building the platform assets and creating the GitHub Release.
+desktop app. Release Please watches Conventional Commit messages and opens a release PR with the
+changelog and synchronized project versions: `fix:` proposes a patch, `feat:` a minor release,
+and a breaking change proposes a major release. Merging that PR creates the release and starts
+the publishing workflow, which reruns tests before building all five self-contained packages and
+the SHA-256 manifest used by the in-app updater. Publishing can also be started manually by
+dispatching the `Build, test, and publish` workflow with an existing `v*` tag.
 
 ## Support the project
 

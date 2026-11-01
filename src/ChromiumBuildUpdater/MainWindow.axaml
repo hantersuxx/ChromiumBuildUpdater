@@ -1,182 +1,329 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d"
-        x:Class="ChromiumBuildUpdater.MainWindow"
-        Title="Chromium Build Updater"
-        Width="900"
-        Height="760"
-        MinWidth="620"
-        MinHeight="620"
-        Background="{DynamicResource AppBackgroundBrush}">
-  <ScrollViewer VerticalScrollBarVisibility="Auto">
-    <Grid MaxWidth="960" Margin="32">
-      <StackPanel Spacing="20">
-        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-          <Border Width="54" Height="54" CornerRadius="16" Background="#243C5A">
-            <TextBlock Text="CB" HorizontalAlignment="Center" VerticalAlignment="Center"
-                       FontSize="20" FontWeight="Bold" Foreground="White"/>
-          </Border>
-          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
-            <TextBlock Text="Chromium Build Updater" FontSize="26" FontWeight="Bold"
-                       Foreground="{DynamicResource HeadingTextBrush}"/>
-            <TextBlock Text="Track trusted builds. Review each update. Stay in control."
-                       FontSize="14" Foreground="{DynamicResource SecondaryTextBrush}"/>
-          </StackPanel>
-        </Grid>
-
-        <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrushColor}" BorderThickness="1"
-                CornerRadius="18" Padding="24">
-          <StackPanel Spacing="18">
-            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="16">
-              <StackPanel Spacing="6">
-                <TextBlock Text="Browser build" FontSize="14" FontWeight="SemiBold"
-                           Foreground="{DynamicResource BodyTextBrush}"/>
-                <ComboBox x:Name="FlavorSelector" MinWidth="250" Foreground="{DynamicResource PrimaryTextBrush}"/>
-              </StackPanel>
-              <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="6">
-                <TextBlock Text="Platform" FontSize="14" FontWeight="SemiBold"
-                           Foreground="{DynamicResource BodyTextBrush}" HorizontalAlignment="Right"/>
-                <TextBlock x:Name="PlatformText" FontSize="14" Foreground="{DynamicResource SecondaryTextBrush}"
-                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
-              </StackPanel>
-              <TextBlock x:Name="AvailabilityNote" Grid.Row="1" Grid.ColumnSpan="2"
-                         TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource WarningTextBrush}"
-                         IsVisible="False" Margin="0,6,0,0"/>
-            </Grid>
-
-            <Border Background="{DynamicResource SurfaceBackgroundBrush}" CornerRadius="14" Padding="18">
-              <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="20" RowSpacing="16">
-                <StackPanel Spacing="5">
-                  <TextBlock Text="Installed version" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"/>
-                  <TextBlock x:Name="InstalledVersionText" Text="Not installed" FontSize="19"
-                             FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="5">
-                  <TextBlock Text="Latest version" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"/>
-                  <TextBlock x:Name="LatestVersionText" Text="Not checked" FontSize="19"
-                             FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}"/>
-                </StackPanel>
-                <StackPanel Grid.Row="1" Spacing="5">
-                  <TextBlock Text="Release date" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"/>
-                  <TextBlock x:Name="ReleaseDateText" Text="—" FontSize="13" Foreground="{DynamicResource BodyTextBrush}"/>
-                </StackPanel>
-                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
-                  <TextBlock Text="Update source" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"/>
-                  <TextBlock x:Name="SourceText" Text="Not checked yet" FontSize="13"
-                             TextWrapping="Wrap" Foreground="{DynamicResource BodyTextBrush}"/>
-                </StackPanel>
-              </Grid>
-            </Border>
-
-            <StackPanel Spacing="9">
-              <Grid ColumnDefinitions="*,Auto">
-                <TextBlock x:Name="StatusText" Text="Ready when you are."
-                           FontSize="14" Foreground="{DynamicResource BodyTextBrush}" TextWrapping="Wrap"/>
-                <TextBlock x:Name="ProgressText" Grid.Column="1" Text=""
-                           FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="12,0,0,0"/>
-              </Grid>
-              <ProgressBar x:Name="UpdateProgress" Minimum="0" Maximum="100"
-                           Value="0" Height="7" IsIndeterminate="False"/>
-              <TextBlock x:Name="LastCheckedText" Text="Last checked: never"
-                         FontSize="12" Foreground="{DynamicResource MutedTextBrush}"/>
-            </StackPanel>
-
-            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-              <Button x:Name="InstallButton" Content="Install update" Classes="accent"
-                      IsEnabled="False" HorizontalAlignment="Stretch" MinHeight="42"
-                      Foreground="{DynamicResource AccentForegroundBrush}"/>
-              <Button x:Name="CheckNowButton" Grid.Column="1" Content="Check now"
-                      MinHeight="42" MinWidth="120"/>
-              <Button x:Name="OpenBuildPageButton" Grid.Column="2" Content="Release page"
-                      MinHeight="42" MinWidth="120"/>
-            </Grid>
-          </StackPanel>
-        </Border>
-
-        <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrushColor}"
-                BorderThickness="1" CornerRadius="18" Padding="24">
-          <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="10">
-            <StackPanel Spacing="4">
-              <TextBlock Text="Application updates" FontSize="18" FontWeight="SemiBold"
-                         Foreground="{DynamicResource PrimaryTextBrush}"/>
-              <TextBlock x:Name="AppUpdateStatusText" Text="Checking for app updates when the app starts."
-                         FontSize="13" Foreground="{DynamicResource SecondaryTextBrush}"
-                         TextWrapping="Wrap"/>
-            </StackPanel>
-            <Button x:Name="CheckAppUpdatesButton" Grid.Column="1" Content="Check for updates"
-                    MinHeight="38" VerticalAlignment="Center"/>
-            <Button x:Name="InstallAppUpdateButton" Grid.Row="1" Grid.ColumnSpan="2"
-                    Content="Download and install app update" Classes="accent"
-                    IsVisible="False" IsEnabled="False" MinHeight="40"/>
-          </Grid>
-        </Border>
-
-        <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrushColor}" BorderThickness="1"
-                CornerRadius="18" Padding="24">
-          <StackPanel Spacing="14">
-            <TextBlock Text="Update behavior" FontSize="18" FontWeight="SemiBold"
-                       Foreground="{DynamicResource PrimaryTextBrush}"/>
-            <CheckBox x:Name="AutoUpdateCheckBox" Content="Install updates automatically when available"
-                      Foreground="{DynamicResource PrimaryTextBrush}"/>
-            <CheckBox x:Name="DeferWhileRunningCheckBox"
-                      Content="Wait until the selected browser is closed before installing"
-                      Foreground="{DynamicResource PrimaryTextBrush}"/>
-            <CheckBox x:Name="StartWithSystemCheckBox" Content="Launch Chromium Build Updater at sign-in"
-                      Foreground="{DynamicResource PrimaryTextBrush}"/>
-            <CheckBox x:Name="MinimizeToTrayCheckBox" Content="Minimize to the system tray when closed"
-                      IsVisible="False" Foreground="{DynamicResource PrimaryTextBrush}"/>
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-              <TextBlock Text="Check every" VerticalAlignment="Center" FontSize="13"
-                         Foreground="{DynamicResource SecondaryTextBrush}"/>
-              <ComboBox x:Name="IntervalSelector" Grid.Column="1" HorizontalAlignment="Left"
-                        MinWidth="120" Foreground="{DynamicResource PrimaryTextBrush}">
-                <ComboBoxItem Content="1 hour"/>
-                <ComboBoxItem Content="3 hours"/>
-                <ComboBoxItem Content="6 hours"/>
-                <ComboBoxItem Content="12 hours"/>
-                <ComboBoxItem Content="24 hours"/>
-              </ComboBox>
-            </Grid>
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-              <TextBlock Text="Appearance" VerticalAlignment="Center" FontSize="13"
-                         Foreground="{DynamicResource SecondaryTextBrush}"/>
-              <ComboBox x:Name="ThemeSelector" Grid.Column="1" HorizontalAlignment="Left"
-                        MinWidth="120" Foreground="{DynamicResource PrimaryTextBrush}">
-                <ComboBoxItem Content="System" Tag="System"/>
-                <ComboBoxItem Content="Light" Tag="Light"/>
-                <ComboBoxItem Content="Dark" Tag="Dark"/>
-              </ComboBox>
-            </Grid>
-          </StackPanel>
-        </Border>
-
-        <Border Background="{DynamicResource SupportBackgroundBrush}" CornerRadius="16" Padding="22">
-          <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="8">
-            <StackPanel Spacing="4">
-              <TextBlock Text="Support the project" FontSize="16" FontWeight="SemiBold"
-                         Foreground="{DynamicResource PrimaryTextBrush}"/>
-              <TextBlock Text="Optional. The app is free to use; donations never unlock features."
-                         FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" TextWrapping="Wrap"/>
-            </StackPanel>
-            <Button x:Name="PayPalButton" Grid.Column="1" Content="PayPal"
-                    VerticalAlignment="Center"/>
-            <TextBlock Grid.Row="1" Text="Ethereum" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"/>
-            <TextBox x:Name="EthereumAddressText" Grid.Row="1" Grid.Column="1"
-                     IsReadOnly="True" Text="0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791"
-                     MinWidth="320" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Background="{DynamicResource AddressBackgroundBrush}"/>
-            <TextBlock Grid.Row="2" Text="Bitcoin" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"/>
-            <TextBox x:Name="BitcoinAddressText" Grid.Row="2" Grid.Column="1"
-                     IsReadOnly="True" Text="bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr"
-                     MinWidth="320" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Background="{DynamicResource AddressBackgroundBrush}"/>
-          </Grid>
-        </Border>
-
-        <TextBlock Text="Browser builds come from their upstream release projects. Every automatic install requires a valid SHA-256 checksum."
-                   FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
-                   HorizontalAlignment="Center" Margin="12,0,12,10"/>
+<Window
+  xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  mc:Ignorable="d"
+  x:Class="ChromiumBuildUpdater.MainWindow"
+  Title="Chromium Build Updater"
+  Width="860"
+  Height="720"
+  MinWidth="620"
+  MinHeight="580"
+  Background="{DynamicResource AppBackgroundBrush}"
+>
+  <Grid RowDefinitions="Auto,*" RowSpacing="20" MaxWidth="940" Margin="28">
+    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+      <Border Width="54" Height="54" CornerRadius="16" Background="#243C5A">
+        <TextBlock
+          Text="CB"
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          FontSize="20"
+          FontWeight="Bold"
+          Foreground="White"
+        />
+      </Border>
+      <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+        <TextBlock
+          Text="Chromium Build Updater"
+          FontSize="26"
+          FontWeight="Bold"
+          Foreground="{DynamicResource HeadingTextBrush}"
+        />
+        <TextBlock
+          Text="Track trusted builds. Review each update. Stay in control."
+          FontSize="14"
+          Foreground="{DynamicResource SecondaryTextBrush}"
+        />
       </StackPanel>
     </Grid>
-  </ScrollViewer>
+    <TabControl Grid.Row="1">
+      <TabItem Header="Dashboard">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="16" Margin="0,16,0,4">
+            <Border Classes="card">
+              <StackPanel Spacing="18">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="16">
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="Browser build" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource BodyTextBrush}" />
+                    <ComboBox x:Name="FlavorSelector" MinWidth="250" Foreground="{DynamicResource PrimaryTextBrush}" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="6">
+                    <TextBlock
+                      Text="Platform"
+                      FontSize="14"
+                      FontWeight="SemiBold"
+                      Foreground="{DynamicResource BodyTextBrush}"
+                      HorizontalAlignment="Right"
+                    />
+                    <TextBlock
+                      x:Name="PlatformText"
+                      FontSize="14"
+                      Foreground="{DynamicResource SecondaryTextBrush}"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center"
+                    />
+                  </StackPanel>
+                  <TextBlock
+                    x:Name="AvailabilityNote"
+                    Grid.Row="1"
+                    Grid.ColumnSpan="2"
+                    TextWrapping="Wrap"
+                    FontSize="12"
+                    Foreground="{DynamicResource WarningTextBrush}"
+                    IsVisible="False"
+                    Margin="0,6,0,0"
+                  />
+                </Grid>
+                <Border Classes="card-surface">
+                  <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="20" RowSpacing="16">
+                    <StackPanel Spacing="5">
+                      <TextBlock Text="Installed version" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                      <TextBlock
+                        x:Name="InstalledVersionText"
+                        Text="Not installed"
+                        FontSize="19"
+                        FontWeight="SemiBold"
+                        Foreground="{DynamicResource PrimaryTextBrush}"
+                      />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="5">
+                      <TextBlock Text="Latest version" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                      <TextBlock
+                        x:Name="LatestVersionText"
+                        Text="Not checked"
+                        FontSize="19"
+                        FontWeight="SemiBold"
+                        Foreground="{DynamicResource PrimaryTextBrush}"
+                      />
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Spacing="5">
+                      <TextBlock Text="Release date" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                      <TextBlock x:Name="ReleaseDateText" Text="—" FontSize="13" Foreground="{DynamicResource BodyTextBrush}" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
+                      <TextBlock Text="Update source" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                      <TextBlock
+                        x:Name="SourceText"
+                        Text="Not checked yet"
+                        FontSize="13"
+                        TextWrapping="Wrap"
+                        Foreground="{DynamicResource BodyTextBrush}"
+                      />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+                <StackPanel Spacing="9">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock
+                      x:Name="StatusText"
+                      Text="Ready when you are."
+                      FontSize="14"
+                      Foreground="{DynamicResource BodyTextBrush}"
+                      TextWrapping="Wrap"
+                    />
+                    <TextBlock
+                      x:Name="ProgressText"
+                      Grid.Column="1"
+                      Text=""
+                      FontSize="12"
+                      Foreground="{DynamicResource SecondaryTextBrush}"
+                      Margin="12,0,0,0"
+                    />
+                  </Grid>
+                  <ProgressBar x:Name="UpdateProgress" Minimum="0" Maximum="100" Value="0" Height="7" IsIndeterminate="False" />
+                  <TextBlock
+                    x:Name="LastCheckedText"
+                    Text="Last checked: never"
+                    FontSize="12"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                  />
+                </StackPanel>
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                  <Button
+                    x:Name="InstallButton"
+                    Content="Install update"
+                    Classes="accent"
+                    IsEnabled="False"
+                    HorizontalAlignment="Stretch"
+                    MinHeight="42"
+                    Foreground="{DynamicResource AccentForegroundBrush}"
+                  />
+                  <Button x:Name="CheckNowButton" Grid.Column="1" Content="Check now" MinHeight="42" MinWidth="120" />
+                  <Button
+                    x:Name="OpenBuildPageButton"
+                    Grid.Column="2"
+                    Content="Release page"
+                    MinHeight="42"
+                    MinWidth="120"
+                  />
+                </Grid>
+              </StackPanel>
+            </Border>
+            <Border Classes="card">
+              <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="10">
+                <StackPanel Spacing="4">
+                  <TextBlock
+                    Text="Application updates"
+                    FontSize="18"
+                    FontWeight="SemiBold"
+                    Foreground="{DynamicResource PrimaryTextBrush}"
+                  />
+                  <TextBlock
+                    x:Name="AppUpdateStatusText"
+                    Text="Checking for app updates when the app starts."
+                    FontSize="13"
+                    Foreground="{DynamicResource SecondaryTextBrush}"
+                    TextWrapping="Wrap"
+                  />
+                </StackPanel>
+                <Button
+                  x:Name="CheckAppUpdatesButton"
+                  Grid.Column="1"
+                  Content="Check for updates"
+                  MinHeight="38"
+                  VerticalAlignment="Center"
+                />
+                <Button
+                  x:Name="InstallAppUpdateButton"
+                  Grid.Row="1"
+                  Grid.ColumnSpan="2"
+                  Content="Download and install app update"
+                  Classes="accent"
+                  IsVisible="False"
+                  IsEnabled="False"
+                  MinHeight="40"
+                />
+              </Grid>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Preferences">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="16" Margin="0,16,0,4">
+            <Border Classes="card">
+              <StackPanel Spacing="14">
+                <TextBlock Text="Update behavior" Classes="section-title" />
+                <CheckBox
+                  x:Name="AutoUpdateCheckBox"
+                  Content="Install updates automatically when available"
+                  Foreground="{DynamicResource PrimaryTextBrush}"
+                />
+                <CheckBox
+                  x:Name="DeferWhileRunningCheckBox"
+                  Content="Wait until the selected browser is closed before installing"
+                  Foreground="{DynamicResource PrimaryTextBrush}"
+                />
+                <CheckBox
+                  x:Name="StartWithSystemCheckBox"
+                  Content="Launch Chromium Build Updater at sign-in"
+                  Foreground="{DynamicResource PrimaryTextBrush}"
+                />
+                <CheckBox
+                  x:Name="MinimizeToTrayCheckBox"
+                  Content="Minimize to the system tray when closed"
+                  IsVisible="False"
+                  Foreground="{DynamicResource PrimaryTextBrush}"
+                />
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                  <TextBlock
+                    Text="Check every"
+                    VerticalAlignment="Center"
+                    FontSize="13"
+                    Foreground="{DynamicResource SecondaryTextBrush}"
+                  />
+                  <ComboBox
+                    x:Name="IntervalSelector"
+                    Grid.Column="1"
+                    HorizontalAlignment="Left"
+                    MinWidth="120"
+                    Foreground="{DynamicResource PrimaryTextBrush}"
+                  >
+                    <ComboBoxItem Content="1 hour" Tag="1" />
+                    <ComboBoxItem Content="3 hours" Tag="3" />
+                    <ComboBoxItem Content="6 hours" Tag="6" />
+                    <ComboBoxItem Content="12 hours" Tag="12" />
+                    <ComboBoxItem Content="24 hours" Tag="24" />
+                  </ComboBox>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                  <TextBlock
+                    Text="Appearance"
+                    VerticalAlignment="Center"
+                    FontSize="13"
+                    Foreground="{DynamicResource SecondaryTextBrush}"
+                  />
+                  <ComboBox
+                    x:Name="ThemeSelector"
+                    Grid.Column="1"
+                    HorizontalAlignment="Left"
+                    MinWidth="120"
+                    Foreground="{DynamicResource PrimaryTextBrush}"
+                  >
+                    <ComboBoxItem Content="System" Tag="System" />
+                    <ComboBoxItem Content="Light" Tag="Light" />
+                    <ComboBoxItem Content="Dark" Tag="Dark" />
+                  </ComboBox>
+                </Grid>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="Support">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="16" Margin="0,16,0,4">
+            <Border Classes="card">
+              <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="8">
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Support the project" Classes="section-title" FontSize="16" />
+                  <TextBlock
+                    Text="Optional. The app is free to use; donations never unlock features."
+                    FontSize="12"
+                    Foreground="{DynamicResource SecondaryTextBrush}"
+                    TextWrapping="Wrap"
+                  />
+                </StackPanel>
+                <Button x:Name="PayPalButton" Grid.Column="1" Content="PayPal" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="1" Text="Ethereum" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                <TextBox
+                  x:Name="EthereumAddressText"
+                  Grid.Row="1"
+                  Grid.Column="1"
+                  IsReadOnly="True"
+                  Text="0xfdC3A6Dcd29a98d4c1FB0c8EF1Ab643809F5a791"
+                  MinWidth="320"
+                  FontSize="12"
+                  Foreground="{DynamicResource PrimaryTextBrush}"
+                  Background="{DynamicResource AddressBackgroundBrush}"
+                />
+                <TextBlock Grid.Row="2" Text="Bitcoin" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                <TextBox
+                  x:Name="BitcoinAddressText"
+                  Grid.Row="2"
+                  Grid.Column="1"
+                  IsReadOnly="True"
+                  Text="bc1q9d7qsevsnycdyxt2972n6482hked2m2wnprmlr"
+                  MinWidth="320"
+                  FontSize="12"
+                  Foreground="{DynamicResource PrimaryTextBrush}"
+                  Background="{DynamicResource AddressBackgroundBrush}"
+                />
+              </Grid>
+            </Border>
+            <TextBlock
+              Text="Browser builds come from their upstream release projects. Every automatic install requires a valid SHA-256 checksum."
+              FontSize="11"
+              Foreground="{DynamicResource MutedTextBrush}"
+              TextWrapping="Wrap"
+              HorizontalAlignment="Center"
+              Margin="12,0,12,10"
+            />
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+    </TabControl>
+  </Grid>
 </Window>
