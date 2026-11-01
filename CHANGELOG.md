@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0](https://github.com/hantersuxx/ChromiumBuildUpdater/compare/v3.1.4...v3.2.0) (2026-11-01)
+
+
+### Features
+
+* **app-update:** implement progress reporting for download and verification stages ([4e96ba9](https://github.com/hantersuxx/ChromiumBuildUpdater/commit/4e96ba92cd34d263430f2a4acf729e00b2775287))
+
 ## [3.1.4](https://github.com/hantersuxx/ChromiumBuildUpdater/compare/v3.1.3...v3.1.4) (2026-11-01)
 
 
