@@ -162,7 +162,7 @@
               </StackPanel>
             </Border>
             <Border Classes="card">
-              <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="10">
+              <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="10">
                 <StackPanel Spacing="4">
                   <TextBlock
                     Text="Application updates"
@@ -185,9 +185,17 @@
                   MinHeight="38"
                   VerticalAlignment="Center"
                 />
+                <ProgressBar
+                  x:Name="AppUpdateProgressBar"
+                  Grid.Row="1"
+                  Grid.ColumnSpan="2"
+                  IsVisible="False"
+                  MinHeight="8"
+                  Maximum="100"
+                />
                 <Button
                   x:Name="InstallAppUpdateButton"
-                  Grid.Row="1"
+                  Grid.Row="2"
                   Grid.ColumnSpan="2"
                   Content="Download and install app update"
                   Classes="accent"

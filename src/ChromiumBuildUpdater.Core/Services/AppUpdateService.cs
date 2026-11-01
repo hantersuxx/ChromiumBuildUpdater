@@ -13,6 +13,18 @@ public sealed record AppUpdateRelease(string Version, string AssetName, Uri Down
 
 public sealed record StagedAppUpdate(string ExecutablePath, string WorkingDirectory);
 
+public enum AppUpdateProgressStage
+{
+    Downloading,
+    Verifying,
+    Preparing
+}
+
+public sealed record AppUpdateProgress(
+    AppUpdateProgressStage Stage,
+    long BytesTransferred = 0,
+    long? TotalBytes = null);
+
 public sealed class AppUpdateService
 {
     private const string LatestReleaseApi =
@@ -75,7 +87,8 @@ public sealed class AppUpdateService
 
     public async Task<StagedAppUpdate> DownloadAndVerifyAsync(
         AppUpdateRelease release,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<AppUpdateProgress>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(release);
         string expectedAssetName = GetAssetName($"v{release.Version}", _platform, _architecture);
@@ -97,9 +110,28 @@ public sealed class AppUpdateService
                 await using Stream download = await response.Content.ReadAsStreamAsync(cancellationToken);
                 await using var package = new FileStream(
                     packagePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, useAsync: true);
-                await download.CopyToAsync(package, cancellationToken);
+                long? totalBytes = response.Content.Headers.ContentLength;
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                long bytesTransferred = 0;
+                var buffer = new byte[81920];
+                ReportDownloadProgress(progress, bytesTransferred, totalBytes);
+                int bytesRead;
+                while ((bytesRead = await download.ReadAsync(buffer, cancellationToken)) > 0)
+                {
+                    await package.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+                    bytesTransferred += bytesRead;
+                    if (stopwatch.Elapsed >= TimeSpan.FromMilliseconds(500) ||
+                        (totalBytes.HasValue && bytesTransferred >= totalBytes.Value))
+                    {
+                        ReportDownloadProgress(progress, bytesTransferred, totalBytes);
+                        stopwatch.Restart();
+                    }
+                }
+
+                ReportDownloadProgress(progress, bytesTransferred, totalBytes);
             }
 
+            progress?.Report(new AppUpdateProgress(AppUpdateProgressStage.Verifying));
             await using (var package = File.OpenRead(packagePath))
             {
                 byte[] actualDigest = await SHA256.HashDataAsync(package, cancellationToken);
@@ -110,6 +142,7 @@ public sealed class AppUpdateService
                 }
             }
 
+            progress?.Report(new AppUpdateProgress(AppUpdateProgressStage.Preparing));
             if (release.AssetName.EndsWith(".tar.gz", StringComparison.Ordinal))
                 await ExtractUnixExecutableAsync(packagePath, executablePath, cancellationToken);
             else
@@ -132,6 +165,13 @@ public sealed class AppUpdateService
             throw;
         }
     }
+
+    private static void ReportDownloadProgress(
+        IProgress<AppUpdateProgress>? progress,
+        long bytesTransferred,
+        long? totalBytes) =>
+        progress?.Report(new AppUpdateProgress(
+            AppUpdateProgressStage.Downloading, bytesTransferred, totalBytes));
 
     public static string GetAssetName(string tag, HostPlatform platform, Architecture architecture)
     {

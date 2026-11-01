@@ -118,6 +118,40 @@ public class AppUpdateServiceTests
     }
 
     [Fact]
+    public async Task DownloadAndVerifyAsync_ReportsDownloadAndPreparationProgress()
+    {
+        byte[] binary = Encoding.UTF8.GetBytes("verified executable");
+        string digest = Convert.ToHexString(SHA256.HashData(binary));
+        var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(binary)
+        });
+        using var client = new HttpClient(handler);
+        var service = new AppUpdateService(client, HostPlatform.Windows, Architecture.X64, "3.1.0");
+        var update = new AppUpdateRelease(
+            "3.2.0",
+            "ChromiumBuildUpdater-v3.2.0-win-x64.exe",
+            new Uri("https://github.com/hantersuxx/ChromiumBuildUpdater/releases/download/v3.2.0/app.exe"),
+            digest);
+        var progress = new RecordingProgress<AppUpdateProgress>();
+
+        StagedAppUpdate staged = await service.DownloadAndVerifyAsync(update, progress: progress);
+        try
+        {
+            Assert.Contains(progress.Values, item =>
+                item.Stage == AppUpdateProgressStage.Downloading &&
+                item.BytesTransferred == binary.Length &&
+                item.TotalBytes == binary.Length);
+            Assert.Contains(progress.Values, item => item.Stage == AppUpdateProgressStage.Verifying);
+            Assert.Contains(progress.Values, item => item.Stage == AppUpdateProgressStage.Preparing);
+        }
+        finally
+        {
+            Directory.Delete(staged.WorkingDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task DownloadAndVerifyAsync_ExtractsOnlyExpectedUnixExecutable()
     {
         byte[] binary = Encoding.UTF8.GetBytes("verified executable");
@@ -177,5 +211,12 @@ public class AppUpdateServiceTests
             RequestedUris.Add(request.RequestUri!);
             return Task.FromResult(responseFactory(request));
         }
+    }
+
+    private sealed class RecordingProgress<T> : IProgress<T>
+    {
+        public List<T> Values { get; } = [];
+
+        public void Report(T value) => Values.Add(value);
     }
 }
