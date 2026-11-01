@@ -26,18 +26,6 @@
           "type": "revert",
           "section": "Reverts"
         }
-      ],
-      "extra-files": [
-        {
-          "type": "xml",
-          "path": "src/ChromiumBuildUpdater/ChromiumBuildUpdater.csproj",
-          "xpath": "//Project/PropertyGroup/Version"
-        },
-        {
-          "type": "xml",
-          "path": "src/ChromiumBuildUpdater.Core/ChromiumBuildUpdater.Core.csproj",
-          "xpath": "//Project/PropertyGroup/Version"
-        }
       ]
     }
   }
