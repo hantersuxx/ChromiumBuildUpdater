@@ -1,4 +1,4 @@
-name: Build, test, and publish
+name: CI and release
 
 on:
   push:
@@ -15,18 +15,9 @@ on:
         description: Release tag to build and publish (for example, v3.2.0)
         required: true
         type: string
-  workflow_call:
-    inputs:
-      release_tag:
-        description: Release tag to build and publish (for example, v3.2.0)
-        required: true
-        type: string
 
 permissions:
   contents: read
-
-env:
-  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 jobs:
   test:
@@ -46,10 +37,42 @@ jobs:
       - run: dotnet test ChromiumBuildUpdater.sln --configuration Release
       - run: dotnet build src/ChromiumBuildUpdater/ChromiumBuildUpdater.csproj --configuration Release
 
-  publish:
-    name: Publish (${{ matrix.rid }})
-    if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+  release_please:
+    name: Prepare release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v4
+      - name: Explain when no release is published
+        if: steps.release.outputs.release_created != 'true'
+        run: echo "No release was created by this commit; the publisher is skipped." >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: Publish release assets
+    if: >-
+      always() &&
+      needs.test.result == 'success' &&
+      (
+        startsWith(github.ref, 'refs/tags/v') ||
+        (github.event_name == 'workflow_dispatch' && inputs.release_tag != '') ||
+        (needs.release_please.result == 'success' && needs.release_please.outputs.release_created == 'true')
+      )
+    needs:
+      - test
+      - release_please
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag || needs.release_please.outputs.tag_name || github.ref_name }}
     strategy:
       fail-fast: false
       matrix:
@@ -73,7 +96,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha || inputs.release_tag || github.sha }}
+          ref: ${{ inputs.release_tag || needs.release_please.outputs.tag_name || github.ref }}
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
@@ -94,11 +117,17 @@ jobs:
 
   release:
     name: Create GitHub release
-    if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
-    needs: publish
+    if: >-
+      always() &&
+      needs.publish.result == 'success'
+    needs:
+      - publish
+      - release_please
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag || needs.release_please.outputs.tag_name || github.ref_name }}
     steps:
       - uses: actions/download-artifact@v8
         with:
