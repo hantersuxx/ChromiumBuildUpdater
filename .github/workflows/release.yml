@@ -57,7 +57,7 @@ jobs:
         run: echo "No release was created by this commit; the publisher is skipped." >> "$GITHUB_STEP_SUMMARY"
 
   publish:
-    name: Publish ${{ matrix.rid }}
+    name: Publish release assets
     if: >-
       always() &&
       needs.test.result == 'success' &&
