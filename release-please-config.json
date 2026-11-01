@@ -3,6 +3,29 @@
     ".": {
       "release-type": "simple",
       "package-name": "ChromiumBuildUpdater",
+      "version-file": "version.txt",
+      "changelog-sections": [
+        {
+          "type": "feat",
+          "section": "Features"
+        },
+        {
+          "type": "fix",
+          "section": "Bug Fixes"
+        },
+        {
+          "type": "perf",
+          "section": "Performance Improvements"
+        },
+        {
+          "type": "refactor",
+          "section": "Code Refactoring"
+        },
+        {
+          "type": "revert",
+          "section": "Reverts"
+        }
+      ],
       "extra-files": [
         {
           "type": "xml",
