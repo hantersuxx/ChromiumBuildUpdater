@@ -6,14 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>ChromiumBuildUpdater</AssemblyName>
     <RootNamespace>ChromiumBuildUpdater</RootNamespace>
-    <Version>3.1.3</Version>
+    <Version>3.1.4</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.1.4" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
+    <PackageReference Include="Avalonia" Version="12.1.4"/>
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4"/>
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4"/>
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4"/>
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
@@ -21,10 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="Assets\app.ico" />
+    <AvaloniaResource Include="Assets\app.ico"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ChromiumBuildUpdater.Core\ChromiumBuildUpdater.Core.csproj" />
+    <ProjectReference Include="..\ChromiumBuildUpdater.Core\ChromiumBuildUpdater.Core.csproj"/>
   </ItemGroup>
 </Project>
