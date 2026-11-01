@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-latest, ubuntu-24.04, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -51,10 +51,10 @@ jobs:
           - os: windows-latest
             rid: win-x64
             archive: exe
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             rid: linux-x64
             archive: tar.gz
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             rid: linux-arm64
             archive: tar.gz
           - os: macos-latest
@@ -90,7 +90,7 @@ jobs:
     name: Create GitHub release
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
     needs: publish
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
