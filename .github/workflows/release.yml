@@ -31,10 +31,10 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
-      - uses: actions/setup-dotnet@v4
+          ref: ${{ github.event.pull_request.head.sha || inputs.release_tag || github.sha }}
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
       - run: dotnet test ChromiumBuildUpdater.sln --configuration Release
@@ -65,10 +65,10 @@ jobs:
             archive: tar.gz
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
-      - uses: actions/setup-dotnet@v4
+          ref: ${{ github.event.pull_request.head.sha || inputs.release_tag || github.sha }}
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
       - name: Publish self-contained single-file app
@@ -80,7 +80,7 @@ jobs:
       - name: Package Unix executable
         if: matrix.rid != 'win-x64'
         run: tar -czf ChromiumBuildUpdater-${{ env.RELEASE_TAG }}-${{ matrix.rid }}.tar.gz -C publish ChromiumBuildUpdater
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.rid }}
           path: ChromiumBuildUpdater-${{ env.RELEASE_TAG }}-${{ matrix.rid }}.${{ matrix.archive }}
@@ -94,14 +94,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: release-*
           path: release-assets
           merge-multiple: true
       - name: Create SHA-256 manifest
         run: cd release-assets && sha256sum * > SHA256SUMS.txt
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: Chromium Build Updater ${{ env.RELEASE_TAG }}
