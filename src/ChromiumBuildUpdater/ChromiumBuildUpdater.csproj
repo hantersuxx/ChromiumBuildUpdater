@@ -3,6 +3,7 @@
     <OutputType>WinExe</OutputType>
     <AssemblyName>ChromiumBuildUpdater</AssemblyName>
     <RootNamespace>ChromiumBuildUpdater</RootNamespace>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +19,7 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\app.ico"/>
+    <AvaloniaResource Include="Assets\app.png"/>
   </ItemGroup>
 
   <ItemGroup>

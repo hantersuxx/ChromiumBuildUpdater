@@ -5,6 +5,7 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   x:Class="ChromiumBuildUpdater.MainWindow"
+  Icon="avares://ChromiumBuildUpdater/Assets/app.ico"
   Title="Chromium Build Updater"
   Width="860"
   Height="720"
@@ -14,16 +15,7 @@
 >
   <Grid RowDefinitions="Auto,*" RowSpacing="20" MaxWidth="940" Margin="28">
     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-      <Border Width="54" Height="54" CornerRadius="16" Background="#243C5A">
-        <TextBlock
-          Text="CB"
-          HorizontalAlignment="Center"
-          VerticalAlignment="Center"
-          FontSize="20"
-          FontWeight="Bold"
-          Foreground="White"
-        />
-      </Border>
+      <Image Source="avares://ChromiumBuildUpdater/Assets/app.png" Width="54" Height="54" />
       <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
         <TextBlock
           Text="Chromium Build Updater"
