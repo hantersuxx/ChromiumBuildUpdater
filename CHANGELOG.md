@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.2.2](https://github.com/hantersuxx/ChromiumBuildUpdater/compare/v3.2.1...v3.2.2) (2026-11-02)
+
+
+### Bug Fixes
+
+* add branded application and taskbar icon ([6e3b844](https://github.com/hantersuxx/ChromiumBuildUpdater/commit/6e3b8441242622412752c0a400761f6ace5d6e15))
+* add branded application and taskbar icon ([3ddb238](https://github.com/hantersuxx/ChromiumBuildUpdater/commit/3ddb2380188a9396e870edeacbf331f81f0b8103))
+
 ## [3.2.1](https://github.com/hantersuxx/ChromiumBuildUpdater/compare/v3.2.0...v3.2.1) (2026-11-01)
 
 
